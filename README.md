@@ -156,7 +156,19 @@ A gallery of current screenshots (as provided). Each screenshot is separated wit
 
 ![Screenshot 14](https://github.com/user-attachments/assets/495c7d90-d981-4121-80ac-c30c6cf4e93a)
 
+![Screenshot 15](https://github.com/user-attachments/assets/fb60d6b5-31c6-4085-8977-57e419917cab)
 
+![Screenshot 16](https://github.com/user-attachments/assets/30eebef9-2eda-4a50-b3dd-023db303983c)
+
+![Screenshot 17](https://github.com/user-attachments/assets/3b803fb5-10a1-4cd7-8c76-994c83e4e4ca)
+
+![Screenshot 18](https://github.com/user-attachments/assets/ac4fc3ec-8419-4cfe-8787-41141c2038ef)
+
+![Screenshot 19](https://github.com/user-attachments/assets/2bc488dc-d49b-4780-9f72-cfafffc32188)
+
+Tips for screenshots
+- Prefer compressed thumbnails for README to keep page load fast.
+- Use image captions beneath each image if you want to explain UI context.
 ---
 
 ## Contributing
