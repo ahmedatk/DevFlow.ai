@@ -25,7 +25,6 @@ Table of Contents
 
 DevFlow.ai is a code-focused project intended to streamline developer workflows. This README is intended as a user- and contributor-facing starting point: it documents what the repo is for, how to run it locally, and how to contribute.
 
-(If you want a longer project description — product goals, high-level architecture, or specifics such as whether this repo is a frontend, backend, or full-stack app — tell me and I can expand this section after I scan files like package.json, src/, and other repo metadata.)
 
 ---
 
@@ -43,7 +42,6 @@ Common frameworks/tools often used with this composition (update to match your r
 - Linters & formatters: ESLint, Prettier
 - Testing: Jest / Vitest / Playwright (if present)
 
-If you'd like, I can scan package.json and the repository to list exact frameworks and versions.
 
 ---
 
@@ -75,7 +73,6 @@ A suggested / common structure for TypeScript frontend projects. Replace with ex
 - tsconfig.json — TypeScript configuration
 - README.md — this file
 
-To generate a precise tree, I can scan the repo and produce the exact file/folder listing and sizes.
 
 ---
 
@@ -159,7 +156,6 @@ A gallery of current screenshots (as provided). Each screenshot is separated wit
 
 ![Screenshot 14](https://github.com/user-attachments/assets/495c7d90-d981-4121-80ac-c30c6cf4e93a)
 
-(If you prefer a smaller gallery or thumbnails, I can generate a condensed gallery or host optimized images in /public.)
 
 ---
 
@@ -181,7 +177,6 @@ Guidelines:
 - Add tests for new features where applicable.
 - Keep PRs focused and descriptive.
 
-If you want a CONTRIBUTING.md with templates (issue/PR templates and checklists), I can create one.
 
 ---
 
@@ -189,9 +184,8 @@ If you want a CONTRIBUTING.md with templates (issue/PR templates and checklists)
 
 This project is licensed under the MIT License.
 
-MIT License © [Your Name]. See the LICENSE file for details.
+MIT License © [ahmedatk]. See the LICENSE file for details.
 
-(If you want, I can add a LICENSE file with MIT text and your name/email.)
 
 ---
 
@@ -203,11 +197,5 @@ MIT License © [Your Name]. See the LICENSE file for details.
   - Satyam Pote — satyampote9999@gmail.com
   - Nancy Sharma — attrinancy1@gmail.com
   - Ahamad-talwar — (ahamadtalwar49@gmail.com)
-- Email (primary / maintainer): your-email@example.com (replace with your real contact email)
 
 ---
-
-If you'd like, I can:
-- Commit this README.md into the repository (create a branch and push).
-- Scan package.json and the repo to automatically populate the Technologies and Project structure sections with exact values.
-- Generate a CONTRIBUTING.md and LICENSE file, or create badges (build, license, npm version).
