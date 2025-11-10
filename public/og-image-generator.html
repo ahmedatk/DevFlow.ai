@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OG Image Generator - DevFlow.AI</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #f0f0f0;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .instructions {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .preview-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        #og-image {
+            border: 2px solid #ddd;
+            max-width: 100%;
+            height: auto;
+        }
+        button {
+            margin-top: 20px;
+            padding: 12px 24px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+        .note {
+            margin-top: 20px;
+            padding: 15px;
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="instructions">
+            <h1>OG Image Generator for WhatsApp</h1>
+            <p>This page displays the Open Graph image. To convert it to PNG for WhatsApp:</p>
+            <ol>
+                <li>Right-click on the image below</li>
+                <li>Select "Save image as..." or "Inspect"</li>
+                <li>If using browser dev tools: Right-click the image element → "Capture node screenshot"</li>
+                <li>Save as <code>og-image.png</code> in the <code>public/</code> folder</li>
+                <li>Make sure it's exactly 1200x630 pixels</li>
+            </ol>
+            <p><strong>Alternative:</strong> Use the automated script: <code>npm run convert-og-image</code></p>
+        </div>
+        
+        <div class="preview-container">
+            <img id="og-image" src="/og-image.svg" alt="DevFlow.AI Open Graph Image" width="1200" height="630">
+            <div class="note">
+                <strong>Note:</strong> WhatsApp requires PNG format for optimal compatibility. 
+                The SVG above needs to be converted to PNG. Use browser dev tools (F12) → 
+                Right-click the image → "Capture node screenshot" for best results.
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+
