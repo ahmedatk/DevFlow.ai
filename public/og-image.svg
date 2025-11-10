@@ -1,0 +1,90 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Gradients -->
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e1e1e;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#121212;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="blueGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#2563eb;stop-opacity:1" />
+    </linearGradient>
+    <!-- Text shadows for better visibility -->
+    <filter id="textShadow">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="2"/>
+      <feOffset dx="0" dy="2" result="offsetblur"/>
+      <feComponentTransfer>
+        <feFuncA type="linear" slope="0.3"/>
+      </feComponentTransfer>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bgGradient)"/>
+  
+  <!-- Decorative grid pattern -->
+  <g opacity="0.1">
+    <line x1="0" y1="210" x2="1200" y2="210" stroke="#3b82f6" stroke-width="1"/>
+    <line x1="0" y1="420" x2="1200" y2="420" stroke="#3b82f6" stroke-width="1"/>
+  </g>
+  
+  <!-- Main Content Container -->
+  <g transform="translate(80, 80)">
+    <!-- Logo Icon -->
+    <g transform="translate(0, 60)">
+      <path d="M80 20L20 50V110L80 140L140 110V50L80 20Z" stroke="url(#blueGradient)" stroke-width="5" stroke-linejoin="round" fill="none"/>
+      <path d="M20 50L80 80L140 50" stroke="url(#blueGradient)" stroke-width="5" stroke-linejoin="round"/>
+      <path d="M80 80V140" stroke="url(#blueGradient)" stroke-width="5" stroke-linejoin="round"/>
+    </g>
+    
+    <!-- Title -->
+    <text x="200" y="120" font-family="system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="80" font-weight="700" fill="#ffffff" filter="url(#textShadow)">
+      DevFlow.AI
+    </text>
+    
+    <!-- Subtitle -->
+    <text x="200" y="180" font-family="system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="36" fill="#a0a0a0" font-weight="500">
+      The AI-Powered Developer Command Center
+    </text>
+    
+    <!-- Description -->
+    <text x="200" y="240" font-family="system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="26" fill="#e0e0e0" font-weight="400">
+      Your personal co-pilot for full project lifecycle management
+    </text>
+    
+    <!-- Feature highlights -->
+    <g transform="translate(200, 290)">
+      <circle cx="0" cy="8" r="4" fill="#3b82f6"/>
+      <text x="20" y="12" font-family="system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="22" fill="#e0e0e0">Plan, build, debug, and deploy without leaving your IDE</text>
+      
+      <circle cx="0" cy="48" r="4" fill="#3b82f6"/>
+      <text x="20" y="52" font-family="system-ui, -apple-system, 'Segoe UI', Arial, sans-serif" font-size="22" fill="#e0e0e0">AI-powered code generation and assistance</text>
+    </g>
+  </g>
+  
+  <!-- Code snippet decoration (right side) -->
+  <g transform="translate(750, 150)">
+    <rect x="0" y="0" width="350" height="280" rx="12" fill="#1e1e1e" stroke="#3c3c3c" stroke-width="2"/>
+    <rect x="0" y="0" width="350" height="40" rx="12" rx2="0" fill="#2d2d2d"/>
+    <circle cx="15" cy="20" r="6" fill="#ef4444"/>
+    <circle cx="35" cy="20" r="6" fill="#f59e0b"/>
+    <circle cx="55" cy="20" r="6" fill="#10b981"/>
+    
+    <g transform="translate(20, 70)">
+      <text x="0" y="0" font-family="'Courier New', Monaco, monospace" font-size="18" fill="#3b82f6" font-weight="600">$ devflow init</text>
+      <text x="0" y="35" font-family="'Courier New', Monaco, monospace" font-size="16" fill="#10b981">✓ Project planned</text>
+      <text x="0" y="60" font-family="'Courier New', Monaco, monospace" font-size="16" fill="#10b981">✓ Code generated</text>
+      <text x="0" y="85" font-family="'Courier New', Monaco, monospace" font-size="16" fill="#10b981">✓ Tests written</text>
+      <text x="0" y="110" font-family="'Courier New', Monaco, monospace" font-size="16" fill="#10b981">✓ Documentation created</text>
+      <text x="0" y="145" font-family="'Courier New', Monaco, monospace" font-size="18" fill="#3b82f6" font-weight="600">→ Ready to deploy!</text>
+    </g>
+  </g>
+  
+  <!-- Bottom accent line -->
+  <line x1="80" y1="520" x2="1120" y2="520" stroke="#3b82f6" stroke-width="3" opacity="0.4" stroke-linecap="round"/>
+</svg>
+
