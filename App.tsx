@@ -459,6 +459,8 @@ const ProjectSelection = ({ projects, onSelectProject, onCreateProject, onLogout
 // to resolve a TypeScript error where an async function was passed to a prop expecting a sync function.
 const ProjectDashboard = ({ project, onGoBack, onUpdateProject, user, onLogout }: { project: Project, onGoBack: () => void, onUpdateProject: (p: Project) => void | Promise<void>, user: User, onLogout: () => void }) => {
     const [activeView, setActiveView] = useState<View>('decomposer');
+    const [isMobile, setIsMobile] = useState(false);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     
     // View state store to persist state across view switches
     // This ensures that when users switch between tools, their progress is maintained
@@ -488,6 +490,29 @@ const ProjectDashboard = ({ project, onGoBack, onUpdateProject, user, onLogout }
             };
         });
     }, []);
+
+    useEffect(() => {
+        const checkViewport = () => {
+            const mobile = window.matchMedia('(max-width: 1023px)').matches;
+            setIsMobile(mobile);
+        };
+
+        checkViewport();
+        window.addEventListener('resize', checkViewport);
+        return () => window.removeEventListener('resize', checkViewport);
+    }, []);
+
+    useEffect(() => {
+        setIsSidebarOpen(!isMobile);
+    }, [isMobile]);
+
+    const handleToggleSidebar = () => {
+        setIsSidebarOpen(prev => !prev);
+    };
+
+    const sidebarClassNames = `fixed inset-y-0 left-0 z-40 w-64 transform transition-transform duration-300 ease-in-out ${
+        isSidebarOpen || !isMobile ? 'translate-x-0' : '-translate-x-full'
+    } lg:static lg:translate-x-0 lg:flex-shrink-0`;
 
     const renderView = () => {
         switch (activeView) {
@@ -582,11 +607,35 @@ const ProjectDashboard = ({ project, onGoBack, onUpdateProject, user, onLogout }
     };
 
     return (
-        <div className="flex h-screen bg-gray-900 text-white font-sans">
-            <Sidebar activeView={activeView} setActiveView={setActiveView} onGoBack={onGoBack} userEmail={user.email} onLogout={onLogout} />
+        <div className="relative flex h-screen bg-gray-900 text-white font-sans">
+            {isMobile && (
+                <div
+                    className={`fixed inset-0 bg-black/60 transition-opacity duration-300 z-30 ${
+                        isSidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                    }`}
+                    onClick={() => setIsSidebarOpen(false)}
+                    aria-hidden="true"
+                />
+            )}
+            <div className={sidebarClassNames}>
+                <Sidebar
+                    activeView={activeView}
+                    setActiveView={setActiveView}
+                    onGoBack={onGoBack}
+                    userEmail={user.email}
+                    onLogout={onLogout}
+                    onClose={isMobile ? () => setIsSidebarOpen(false) : undefined}
+                    isMobile={isMobile}
+                />
+            </div>
             <main className="flex-1 flex flex-col overflow-hidden">
-                <Header title={activeView.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} projectName={project.name} />
-                <div className="flex-1 p-6 overflow-y-auto">
+                <Header
+                    title={activeView.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                    projectName={project.name}
+                    onToggleSidebar={isMobile ? handleToggleSidebar : undefined}
+                    isSidebarOpen={isMobile ? isSidebarOpen : true}
+                />
+                <div className="flex-1 p-4 sm:p-6 overflow-y-auto bg-gray-900">
                     {renderView()}
                 </div>
             </main>

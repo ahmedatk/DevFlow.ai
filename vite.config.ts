@@ -18,6 +18,22 @@ export default defineConfig(({ mode }) => {
         alias: {
           '@': path.resolve(__dirname, '.'),
         }
-      }
+      },
+      build: {
+        // Ensure PWA assets are included in build
+        rollupOptions: {
+          output: {
+            // Preserve service worker and manifest in root
+            assetFileNames: (assetInfo) => {
+              if (assetInfo.name === 'service-worker.js' || assetInfo.name === 'manifest.json') {
+                return '[name][extname]';
+              }
+              return 'assets/[name]-[hash][extname]';
+            }
+          }
+        }
+      },
+      // Ensure service worker is served correctly
+      publicDir: 'public'
     };
 });
