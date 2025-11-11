@@ -57,7 +57,7 @@ export const Sidebar = ({ activeView, setActiveView, onGoBack, userEmail, onLogo
     };
 
     return (
-        <aside className="w-64 bg-gray-800 p-4 border-r border-gray-700 flex flex-col h-full lg:h-screen flex-shrink-0">
+        <aside className="w-64 bg-gray-800 p-4 border-r border-gray-700 flex flex-col h-full lg:h-screen flex-shrink-0 safe-area-left">
             <div className="flex items-center mb-4 px-2 flex-shrink-0">
                 <div className="flex items-center gap-3">
                     <LogoIcon className="w-8 h-8" />
@@ -115,8 +115,8 @@ export const Sidebar = ({ activeView, setActiveView, onGoBack, userEmail, onLogo
                 <NavItem icon={<HeatmapIcon />} label="Project Heatmap" isActive={activeView === 'heatmap'} onClick={() => handleSelectView('heatmap')} />
                 <NavItem icon={<TeamDashboardIcon />} label="Team Dashboard" isActive={activeView === 'team_dashboard'} onClick={() => handleSelectView('team_dashboard')} />
             </nav>
-            <div className="mt-auto flex-shrink-0 pt-4 border-t border-gray-700">
-                <div className="flex items-center gap-3 px-2">
+            <div className="mt-auto flex-shrink-0 pt-4 border-t border-gray-700 safe-area-bottom">
+                <div className="flex items-center gap-3 px-2 mb-2">
                      <UserIcon className="w-8 h-8 text-gray-400 bg-gray-700 p-1.5 rounded-full" />
                      <div className="flex-grow overflow-hidden">
                         <p className="text-sm font-medium text-gray-200 truncate">{userEmail}</p>
@@ -124,6 +124,12 @@ export const Sidebar = ({ activeView, setActiveView, onGoBack, userEmail, onLogo
                      <button onClick={onLogout} title="Logout" className="p-2 rounded-md hover:bg-gray-700">
                         <LogoutIcon className="w-5 h-5 text-gray-400" />
                      </button>
+                </div>
+                {/* Developed in India with bouncing love emoji */}
+                <div className="flex items-center justify-center gap-1.5 px-2 py-1 text-[10px] text-gray-500">
+                    <span>Developed in</span>
+                    <span className="font-semibold text-orange-500">India</span>
+                    <span className="love-bounce text-xs">❤️</span>
                 </div>
             </div>
         </aside>

@@ -607,10 +607,10 @@ const ProjectDashboard = ({ project, onGoBack, onUpdateProject, user, onLogout }
     };
 
     return (
-        <div className="relative flex h-screen bg-gray-900 text-white font-sans">
+        <div className="relative flex h-screen bg-gray-900 text-white font-sans safe-area-inset">
             {isMobile && (
                 <div
-                    className={`fixed inset-0 bg-black/60 transition-opacity duration-300 z-30 ${
+                    className={`fixed inset-0 bg-black/60 transition-opacity duration-300 z-30 safe-area-inset ${
                         isSidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
                     }`}
                     onClick={() => setIsSidebarOpen(false)}
@@ -628,14 +628,14 @@ const ProjectDashboard = ({ project, onGoBack, onUpdateProject, user, onLogout }
                     isMobile={isMobile}
                 />
             </div>
-            <main className="flex-1 flex flex-col overflow-hidden">
+            <main className="flex-1 flex flex-col overflow-hidden safe-area-right">
                 <Header
                     title={activeView.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                     projectName={project.name}
                     onToggleSidebar={isMobile ? handleToggleSidebar : undefined}
                     isSidebarOpen={isMobile ? isSidebarOpen : true}
                 />
-                <div className="flex-1 p-4 sm:p-6 overflow-y-auto bg-gray-900">
+                <div className="flex-1 p-3 sm:p-4 md:p-6 overflow-y-auto bg-gray-900 safe-area-bottom">
                     {renderView()}
                 </div>
             </main>
