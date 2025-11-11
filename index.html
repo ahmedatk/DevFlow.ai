@@ -4,13 +4,13 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     
-    <!-- Favicons -->
+    <!-- Favicons (will be updated by theme-detector.js based on system theme) -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
-    <link rel="apple-touch-icon" sizes="152x152" href="/icons/light/apple-touch-icon-152x152.png" />
-    <link rel="apple-touch-icon" sizes="167x167" href="/icons/light/apple-touch-icon-167x167.png" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/icons/light/apple-touch-icon-180x180.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/icons/light/favicon-16x16.png" id="favicon-16" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/light/favicon-32x32.png" id="favicon-32" />
+    <link rel="apple-touch-icon" sizes="152x152" href="/icons/light/apple-touch-icon-152x152.png" id="apple-icon-152" />
+    <link rel="apple-touch-icon" sizes="167x167" href="/icons/light/apple-touch-icon-167x167.png" id="apple-icon-167" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/light/apple-touch-icon-180x180.png" id="apple-icon-180" />
     
     <!-- Primary Meta Tags -->
     <title>DevFlow.AI — The AI-Powered Developer Command Center</title>
@@ -105,7 +105,35 @@
         mermaid.initialize({ startOnLoad: true, theme: 'dark' });
     </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-okaidia.min.css" />
-  <script src="/theme-detector.js"></script>
+    
+    <!-- Theme Detector - Load early to update icons before page render -->
+    <script>
+      // Immediate theme detection to avoid flash of wrong icon
+      (function() {
+        function updateIconsImmediate() {
+          if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            const themePath = '/icons/dark';
+            // Update favicons
+            const favicon16 = document.querySelector('link[rel="icon"][sizes="16x16"]');
+            const favicon32 = document.querySelector('link[rel="icon"][sizes="32x32"]');
+            if (favicon16) favicon16.href = themePath + '/favicon-16x16.png';
+            if (favicon32) favicon32.href = themePath + '/favicon-32x32.png';
+            // Update Apple touch icons
+            const apple152 = document.querySelector('link[rel="apple-touch-icon"][sizes="152x152"]');
+            const apple167 = document.querySelector('link[rel="apple-touch-icon"][sizes="167x167"]');
+            const apple180 = document.querySelector('link[rel="apple-touch-icon"][sizes="180x180"]');
+            if (apple152) apple152.href = themePath + '/apple-touch-icon-152x152.png';
+            if (apple167) apple167.href = themePath + '/apple-touch-icon-167x167.png';
+            if (apple180) apple180.href = themePath + '/apple-touch-icon-180x180.png';
+          }
+        }
+        // Try immediately
+        updateIconsImmediate();
+        // Also try after a tiny delay to ensure DOM is ready
+        setTimeout(updateIconsImmediate, 0);
+      })();
+    </script>
+    <script src="/theme-detector.js"></script>
   <script type="importmap">
 {
   "imports": {
