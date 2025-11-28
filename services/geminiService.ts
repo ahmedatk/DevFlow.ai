@@ -3,8 +3,21 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import type { Task, ChatMessage, Project, GeneratedCode, SimulationResult } from '../types';
 
-// The API key is injected via process.env.API_KEY. Assume it is available.
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+// The API key is injected via process.env.API_KEY.
+// Initialize lazily to avoid crashing on module load if key is missing.
+let ai: GoogleGenAI;
+
+const getAI = () => {
+    if (!ai) {
+        const apiKey = process.env.API_KEY;
+        if (!apiKey) {
+            console.error("GEMINI_API_KEY is missing!");
+            // Fallback or throw a more descriptive error if needed, but don't crash module load
+        }
+        ai = new GoogleGenAI({ apiKey: apiKey as string });
+    }
+    return ai;
+};
 
 export async function generateTasks(projectDescription: string): Promise<Task[]> {
     const prompt = `
@@ -17,7 +30,7 @@ export async function generateTasks(projectDescription: string): Promise<Task[]>
     `;
 
     try {
-        const response = await ai.models.generateContent({
+        const response = await getAI().models.generateContent({
             model: 'gemini-2.5-pro',
             contents: prompt,
             config: {
@@ -66,7 +79,7 @@ export async function generateBoilerplate(taskDescription: string, fileName: str
         Only output the raw code. Do not include any explanations, markdown formatting, or code fences (like \`\`\`javascript).
     `;
     try {
-        const response = await ai.models.generateContent({ model: 'gemini-2.5-pro', contents: prompt });
+        const response = await getAI().models.generateContent({ model: 'gemini-2.5-pro', contents: prompt });
         return response.text;
     } catch (error) {
         console.error("Gemini API call failed for generateBoilerplate:", error);
@@ -90,7 +103,7 @@ export async function reviewCode(code: string): Promise<string> {
         \`\`\`
     `;
     try {
-        const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
+        const response = await getAI().models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
         return response.text;
     } catch (error) {
         console.error("Gemini API call failed for reviewCode:", error);
@@ -111,7 +124,7 @@ export async function generateUnitTests(code: string): Promise<string> {
         \`\`\`
     `;
     try {
-        const response = await ai.models.generateContent({ model: 'gemini-2.5-pro', contents: prompt });
+        const response = await getAI().models.generateContent({ model: 'gemini-2.5-pro', contents: prompt });
         // Extract code from markdown block if present
         const match = response.text.match(/```(?:\w+\n)?([\s\S]+)```/);
         return match ? match[1].trim() : response.text;
@@ -132,7 +145,7 @@ export async function generateDocumentation(code: string): Promise<string> {
         \`\`\`
     `;
     try {
-        const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
+        const response = await getAI().models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
         return response.text;
     } catch (error) {
         console.error("Gemini API call failed for generateDocumentation:", error);
@@ -152,7 +165,7 @@ export async function analyzeComplexity(code: string): Promise<string> {
         \`\`\`
     `;
     try {
-        const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
+        const response = await getAI().models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
         return response.text;
     } catch (error) {
         console.error("Gemini API call failed for analyzeComplexity:", error);
@@ -171,7 +184,7 @@ export async function summarizeCommit(diff: string): Promise<string> {
         \`\`\`
     `;
     try {
-        const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
+        const response = await getAI().models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
         return response.text;
     } catch (error) {
         console.error("Gemini API call failed for summarizeCommit:", error);
@@ -190,7 +203,7 @@ export async function generateProjectScaffold(description: string): Promise<Gene
         Project Description: "${description}"
     `;
     try {
-        const response = await ai.models.generateContent({
+        const response = await getAI().models.generateContent({
             model: 'gemini-2.5-pro',
             contents: prompt,
             config: {
@@ -233,7 +246,7 @@ export async function runAndReviewCode(code: string, language: string): Promise<
         \`\`\`
     `;
     try {
-        const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
+        const response = await getAI().models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
         return response.text;
     } catch (error) {
         console.error("Gemini API call failed for runAndReviewCode:", error);
@@ -249,10 +262,10 @@ export async function continueConversation(messages: ChatMessage[], project: Pro
     const projectContext = `
         Current Project: "${project.name}"
         Description: "${project.description}"
-        Tasks (${project.tasks.filter(t=>t.status==='done').length}/${project.tasks.length} done):
+        Tasks (${project.tasks.filter(t => t.status === 'done').length}/${project.tasks.length} done):
         ${project.tasks.map(t => `- ${t.title} (Status: ${t.status})`).join('\n')}
     `;
-    
+
     const history = formatChatHistoryForPrompt(messages);
 
     const prompt = `
@@ -270,7 +283,7 @@ export async function continueConversation(messages: ChatMessage[], project: Pro
         Based on all the above, provide a helpful and relevant response to the last user message.
     `;
     try {
-        const response = await ai.models.generateContent({ model: 'gemini-2.5-pro', contents: prompt });
+        const response = await getAI().models.generateContent({ model: 'gemini-2.5-pro', contents: prompt });
         return response.text;
     } catch (error) {
         console.error("Gemini API call failed for continueConversation:", error);
@@ -288,14 +301,14 @@ export async function generateArchitectureDiagram(projectContext: string): Promi
         ${projectContext}
     `;
     try {
-        const response = await ai.models.generateContent({ model: 'gemini-2.5-pro', contents: prompt });
-        
+        const response = await getAI().models.generateContent({ model: 'gemini-2.5-pro', contents: prompt });
+
         const text = response.text;
         const mermaidMatch = text.match(/```mermaid\s*([\s\S]*?)\s*```/);
         if (mermaidMatch && mermaidMatch[1]) {
             return mermaidMatch[1].trim();
         }
-        
+
         // Fallback if the model didn't use fences correctly
         if (text.trim().startsWith('graph') || text.trim().startsWith('flowchart')) {
             return text.trim();
@@ -325,8 +338,8 @@ export async function askMemoryAgent(messages: ChatMessage[], currentInput: stri
 
         Provide a response to the last user message based on the entire conversation history.
     `;
-     try {
-        const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
+    try {
+        const response = await getAI().models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
         return response.text;
     } catch (error) {
         console.error("Gemini API call failed for askMemoryAgent:", error);
@@ -335,7 +348,7 @@ export async function askMemoryAgent(messages: ChatMessage[], currentInput: stri
 }
 
 export async function runAgentSimulation(goal: string, existingFiles: GeneratedCode[]): Promise<SimulationResult> {
-    const existingFileContext = existingFiles.length > 0 
+    const existingFileContext = existingFiles.length > 0
         ? `The project currently contains the following files. You can choose to modify them or add new ones:\n${existingFiles.map(f => `// File: ${f.fileName}\n${f.content}`).join('\n\n')}`
         : "The project is currently empty. The Senior Developer must create all necessary files from scratch.";
 
@@ -362,8 +375,8 @@ export async function runAgentSimulation(goal: string, existingFiles: GeneratedC
         The user's goal is: "${goal}"
     `;
     try {
-        const response = await ai.models.generateContent({ 
-            model: 'gemini-2.5-pro', 
+        const response = await getAI().models.generateContent({
+            model: 'gemini-2.5-pro',
             contents: prompt,
             config: {
                 responseMimeType: 'application/json',

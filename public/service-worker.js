@@ -88,8 +88,81 @@ function getCacheStrategy(request) {
   return 'network-first';
 }
 
-// Fetch event - intelligent caching strategy
+// Virtual File System for Preview
+const fileSystem = new Map();
+
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'UPDATE_FILES') {
+    console.log('[Service Worker] Updating preview files', event.data.files.length);
+    fileSystem.clear();
+    event.data.files.forEach(file => {
+      // Normalize path: ensure leading slash
+      const path = file.fileName.startsWith('/') ? file.fileName : '/' + file.fileName;
+      fileSystem.set(path, file.content);
+    });
+    // Send acknowledgment
+    if (event.ports && event.ports[0]) {
+      event.ports[0].postMessage({ type: 'FILES_UPDATED' });
+    }
+  }
+});
+
+function getMimeType(filename) {
+  const ext = filename.split('.').pop().toLowerCase();
+  switch (ext) {
+    case 'html': return 'text/html';
+    case 'css': return 'text/css';
+    case 'js': case 'jsx': case 'ts': case 'tsx': return 'text/javascript';
+    case 'json': return 'application/json';
+    case 'png': return 'image/png';
+    case 'jpg': case 'jpeg': return 'image/jpeg';
+    case 'svg': return 'image/svg+xml';
+    default: return 'text/plain';
+  }
+}
+
+// Fetch event - intelligent caching strategy + VFS
 self.addEventListener('fetch', (event) => {
+  const url = new URL(event.request.url);
+
+  // Intercept Preview Requests
+  if (url.pathname.startsWith('/_preview/')) {
+    // Extract relative path from /_preview/
+    let path = url.pathname.replace('/_preview', '');
+    if (path === '/' || path === '') path = '/index.html';
+    
+    // Try to find exact match
+    let content = fileSystem.get(path);
+    
+    // Try adding .html if missing
+    if (!content && !path.split('/').pop().includes('.')) {
+        content = fileSystem.get(path + '.html');
+    }
+    
+    // Try index.html in directory
+    if (!content && path.endsWith('/')) {
+        content = fileSystem.get(path + 'index.html');
+    }
+
+    if (content) {
+      const mimeType = getMimeType(path);
+      
+      const response = new Response(content, {
+        status: 200,
+        headers: {
+          'Content-Type': mimeType,
+          'Cache-Control': 'no-store' // Never cache preview files
+        }
+      });
+      event.respondWith(response);
+      return;
+    } else {
+      // File not found in VFS
+      event.respondWith(new Response('File not found in preview: ' + path, { status: 404 }));
+      return;
+    }
+  }
+
   // Skip non-GET requests
   if (event.request.method !== 'GET') {
     return;

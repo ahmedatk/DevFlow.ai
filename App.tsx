@@ -2190,13 +2190,10 @@ const EditorView = ({ project, onUpdateProject }: { project: Project, onUpdatePr
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     
-    // Cleanup deployment URLs on unmount
+    // Cleanup deployment URLs on unmount - No longer needed for VFS
     useEffect(() => {
         return () => {
-            if (deployment) {
-                URL.revokeObjectURL(deployment.mainUrl);
-                deployment.assetUrls.forEach(url => URL.revokeObjectURL(url));
-            }
+            // No cleanup needed for VFS
         };
     }, [deployment]);
 
@@ -2311,742 +2308,88 @@ const EditorView = ({ project, onUpdateProject }: { project: Project, onUpdatePr
     };
 
     // Deployment function - always uses latest editableFiles to ensure preview shows current code
+    // Deployment function - Uses Service Worker VFS
     const handleDeployProject = useCallback(async () => {
         setIsDeploying(true); 
         setDeployError('');
-        // Clean up previous deployment URLs to prevent memory leaks
-        if (deployment) { 
-            URL.revokeObjectURL(deployment.mainUrl); 
-            deployment.assetUrls.forEach(url => URL.revokeObjectURL(url)); 
-        }
-        // Small delay to allow UI to update
-        await new Promise(res => setTimeout(res, 100));
+        
         try {
-            // Use the latest editableFiles to ensure deployment reflects all current changes
-            let htmlFile = editableFiles.find(f => f.fileName.toLowerCase() === 'index.html') || editableFiles.find(f => f.fileName.toLowerCase().endsWith('.html'));
-            if (!htmlFile) throw new Error("Deployment failed: No HTML file found.");
-            
-            const blobMap = new Map<string, string>(); 
-            const importMap = { imports: {} as Record<string,string> }; 
-            const assetUrls: string[] = [];
-            const getMimeType = (f:string) => { 
-                const e=f.split('.').pop()?.toLowerCase(); 
-                switch(e){
-                    case 'html':return 'text/html';
-                    case 'css':return 'text/css';
-                    case 'js':case 'jsx':case 'ts':case 'tsx':return 'text/javascript';
-                    case 'json':return 'application/json';
-                    case 'png':return'image/png';
-                    case 'jpg':case 'jpeg':return'image/jpeg';
-                    case 'svg':return'image/svg+xml';
-                    default:return'application/octet-stream'
-                }
-            };
-            const needsBabel = editableFiles.some(f => /\.(jsx|tsx)$/.test(f.fileName));
-            
-            // Separate HTML files from other assets
-            const htmlFiles = editableFiles.filter(f => f.fileName.toLowerCase().endsWith('.html'));
-            const otherFiles = editableFiles.filter(f => !f.fileName.toLowerCase().endsWith('.html'));
-            const htmlBlobMap = new Map<string, string>(); // Map for HTML files
-
-            // Create blob URLs for all non-HTML files first
-            for (const file of otherFiles) {
-                const blob = new Blob([file.content], { type: getMimeType(file.fileName) });
-                const blobUrl = URL.createObjectURL(blob); 
-                assetUrls.push(blobUrl);
-                
-                // Store multiple path variations for flexible resolution
-                blobMap.set(file.fileName, blobUrl);
-                blobMap.set(`/${file.fileName}`, blobUrl); // With leading slash
-                blobMap.set(`./${file.fileName}`, blobUrl); // With ./ prefix
-                
-                // Add to import map for ES modules
-                importMap.imports[`./${file.fileName}`] = blobUrl;
-                importMap.imports[`/${file.fileName}`] = blobUrl;
-                
-                // Add extensionless version for imports without extensions
-                const noExt = `./${file.fileName}`.replace(/\.[^/.]+$/, "");
-                if (noExt !== `./${file.fileName}`) {
-                    importMap.imports[noExt] = blobUrl;
-                    importMap.imports[noExt.replace('./', '/')] = blobUrl;
-                }
-                
-                // Add just the filename for simpler imports
-                const justFileName = file.fileName.split('/').pop() || file.fileName;
-                if (justFileName !== file.fileName) {
-                    blobMap.set(justFileName, blobUrl);
-                    importMap.imports[`./${justFileName}`] = blobUrl;
-                }
-            }
-            
-            // Helper function to resolve file paths - handles various path formats
-            const resolvePath = (path: string, baseDir: string = '', includeHtml: boolean = false): string | null => {
-                if (!path || path.startsWith('http://') || path.startsWith('https://') || path.startsWith('data:') || path.startsWith('blob:')) {
-                    return null; // Skip external URLs
-                }
-                
-                // Remove leading slash and query/hash
-                let cleanPath = path.split('?')[0].split('#')[0];
-                if (cleanPath.startsWith('/')) {
-                    cleanPath = cleanPath.substring(1);
-                }
-                
-                // Check in blobMap (non-HTML files) first
-                if (blobMap.has(cleanPath)) {
-                    return cleanPath;
-                }
-                
-                // Check in htmlBlobMap if HTML files are included
-                if (includeHtml && htmlBlobMap.has(cleanPath)) {
-                    return cleanPath;
-                }
-                
-                // Try with base directory
-                if (baseDir) {
-                    const basePath = `${baseDir}/${cleanPath}`;
-                    if (blobMap.has(basePath)) {
-                        return basePath;
-                    }
-                    if (includeHtml && htmlBlobMap.has(basePath)) {
-                        return basePath;
-                    }
-                }
-                
-                // Try finding by filename only (for cases where path structure differs)
-                const fileName = cleanPath.split('/').pop() || cleanPath;
-                for (const [key] of blobMap.entries()) {
-                    if (key.endsWith(fileName) || key === fileName) {
-                        return key;
-                    }
-                }
-                if (includeHtml) {
-                    for (const [key] of htmlBlobMap.entries()) {
-                        if (key.endsWith(fileName) || key === fileName) {
-                            return key;
-                        }
-                    }
-                }
-                
-                return null;
-            };
-            
-            // Helper function to process a single HTML file and update all asset references
-            const processHtmlFile = (htmlContent: string, fileName: string, isMainFile: boolean = false): string => {
-                const doc = new DOMParser().parseFromString(htmlContent, 'text/html');
-            
-            // Update all script sources, link hrefs, and image sources with comprehensive path resolution
-            doc.querySelectorAll('script[src], link[href], img[src], source[src], video[src], audio[src]').forEach(el => {
-                const attr = el.hasAttribute('src') ? 'src' : 'href'; 
-                const originalPath = el.getAttribute(attr);
-                if (originalPath) {
-                    const resolvedPath = resolvePath(originalPath);
-                    if (resolvedPath && blobMap.has(resolvedPath)) {
-                        const blobUrl = blobMap.get(resolvedPath)!;
-                        el.setAttribute(attr, blobUrl);
-                        
-                        // Add preload hints for critical resources (improves performance for heavy apps)
-                        if (el.tagName === 'LINK' && el.getAttribute('rel') === 'stylesheet') {
-                            const preload = doc.createElement('link');
-                            preload.rel = 'preload';
-                            preload.as = 'style';
-                            preload.href = blobUrl;
-                            doc.head.insertBefore(preload, el);
-                        } else if (el.tagName === 'SCRIPT' && el.getAttribute('type') === 'module') {
-                            const preload = doc.createElement('link');
-                            preload.rel = 'modulepreload';
-                            preload.href = blobUrl;
-                            doc.head.insertBefore(preload, el);
-                        }
-                    }
-                }
-            });
-            
-            // Update anchor tags to use blob URLs for non-HTML files (HTML files handled separately)
-            doc.querySelectorAll('a[href]').forEach(link => {
-                const href = link.getAttribute('href');
-                if (href) {
-                    // Skip external links, mailto, tel, HTML files, etc.
-                    if (href.startsWith('http://') || href.startsWith('https://') || 
-                        href.startsWith('mailto:') || href.startsWith('tel:') || 
-                        href.startsWith('#') || href.startsWith('javascript:') ||
-                        href.startsWith('data:') || href.startsWith('blob:') ||
-                        href.toLowerCase().endsWith('.html') || href.toLowerCase().endsWith('.htm')) {
-                        return; // Keep external links and HTML links as-is (HTML links handled later)
-                    }
-                    
-                    // Check if this is a link to a non-HTML file (like PDF, images, etc.)
-                    const resolvedPath = resolvePath(href);
-                    if (resolvedPath && blobMap.has(resolvedPath)) {
-                        const blobUrl = blobMap.get(resolvedPath)!;
-                        link.setAttribute('href', blobUrl);
-                    }
-                }
-            });
-            
-            // Handle inline scripts that might reference modules
-            doc.querySelectorAll('script:not([src])').forEach(script => {
-                const scriptContent = script.textContent || '';
-                // Check if inline script has import statements that need path resolution
-                if (scriptContent.includes('import ') || scriptContent.includes('from ')) {
-                    // Try to resolve relative imports in inline scripts
-                    let updatedContent = scriptContent;
-                    for (const [fileName, blobUrl] of blobMap.entries()) {
-                        // Replace common import patterns
-                        const patterns = [
-                            new RegExp(`from\\s+['"]\\.?/?${fileName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}['"]`, 'g'),
-                            new RegExp(`import\\s+['"]\\.?/?${fileName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}['"]`, 'g'),
-                        ];
-                        patterns.forEach(pattern => {
-                            updatedContent = updatedContent.replace(pattern, (match) => {
-                                return match.replace(/['"].*?['"]/, `'${blobUrl}'`);
-                            });
-                        });
-                    }
-                    if (updatedContent !== scriptContent) {
-                        script.textContent = updatedContent;
-                    }
-                }
-            });
-            
-            // Handle JSX/TSX files with Babel if needed
-            if (needsBabel) {
-                const blobToFileName = new Map<string, string>();
-                for (const [fileName, blobUrl] of blobMap.entries()) {
-                    blobToFileName.set(blobUrl, fileName);
-                }
-                // Handle both module and regular scripts
-                doc.querySelectorAll('script[src]').forEach(s => {
-                    const scriptElement = s as HTMLScriptElement;
-                    const src = scriptElement.getAttribute('src');
-                    if (src && blobToFileName.has(src)) {
-                        const fileName = blobToFileName.get(src)!;
-                        if (/\.(jsx|tsx)$/.test(fileName)) {
-                            // Store original type before changing
-                            const wasModule = scriptElement.type === 'module';
-                            scriptElement.type = 'text/babel';
-                            // Preserve module behavior for JSX/TSX files
-                            if (wasModule) {
-                                scriptElement.setAttribute('data-type', 'module');
-                            }
-                        }
-                    }
-                });
-            }
-            
-            // Add comprehensive error handling and performance monitoring FIRST
-            const errorHandlerScript = doc.createElement('script');
-            errorHandlerScript.textContent = `
-                (function() {
-                    // Enhanced error handling for heavy applications
-                    const errors = [];
-                    const warnings = [];
-                    
-                    window.addEventListener('error', function(e) {
-                        const errorInfo = {
-                            message: e.message,
-                            filename: e.filename,
-                            lineno: e.lineno,
-                            colno: e.colno,
-                            error: e.error ? e.error.toString() : null,
-                            stack: e.error ? e.error.stack : null
-                        };
-                        errors.push(errorInfo);
-                        console.error('Deployment error:', errorInfo);
-                        
-                        // Try to recover from common errors
-                        if (e.message.includes('Failed to fetch') || e.message.includes('Loading chunk')) {
-                            console.warn('Network error detected, attempting recovery...');
-                            setTimeout(() => {
-                                const scripts = document.querySelectorAll('script[src]');
-                                scripts.forEach(script => {
-                                    if (script.dataset.retryCount < 3) {
-                                        script.dataset.retryCount = (script.dataset.retryCount || 0) + 1;
-                                        const src = script.src;
-                                        script.src = '';
-                                        setTimeout(() => { script.src = src; }, 1000);
-                                    }
-                                });
-                            }, 2000);
-                        }
-                    });
-                    
-                    window.addEventListener('unhandledrejection', function(e) {
-                        const rejectionInfo = {
-                            reason: e.reason ? e.reason.toString() : 'Unknown',
-                            stack: e.reason && e.reason.stack ? e.reason.stack : null
-                        };
-                        warnings.push(rejectionInfo);
-                        console.error('Unhandled promise rejection:', rejectionInfo);
-                    });
-                    
-                    // Performance monitoring
-                    window.addEventListener('load', function() {
-                        if (window.performance && window.performance.timing) {
-                            const perf = window.performance.timing;
-                            const loadTime = perf.loadEventEnd - perf.navigationStart;
-                            console.log('Page load time:', loadTime + 'ms');
-                        }
-                    });
-                    
-                    // Expose error info for debugging
-                    window.__deploymentErrors = errors;
-                    window.__deploymentWarnings = warnings;
-                })();
-            `;
-            doc.head.appendChild(errorHandlerScript);
-            
-            // Add import map BEFORE any module scripts
-            doc.querySelector('script[type="importmap"]')?.remove();
-            const importMapScript = doc.createElement('script'); 
-            importMapScript.type = 'importmap'; 
-            importMapScript.innerHTML = JSON.stringify(importMap); 
-            doc.head.prepend(importMapScript);
-            
-            // Add Babel standalone for JSX/TSX support (load synchronously before other scripts)
-            if (needsBabel) { 
-                const babelScript = doc.createElement('script'); 
-                babelScript.src = "https://unpkg.com/@babel/standalone/babel.min.js"; 
-                babelScript.crossOrigin = 'anonymous';
-                babelScript.async = false;
-                babelScript.defer = false;
-                // Add error handling for Babel loading
-                babelScript.onerror = function() {
-                    console.error('Failed to load Babel. Trying alternative CDN...');
-                    const altBabel = doc.createElement('script');
-                    altBabel.src = "https://cdn.jsdelivr.net/npm/@babel/standalone@7.23.0/babel.min.js";
-                    altBabel.crossOrigin = 'anonymous';
-                    altBabel.async = false;
-                    doc.head.insertBefore(altBabel, babelScript.nextSibling);
-                };
-                doc.head.insertBefore(babelScript, importMapScript.nextSibling);
-            }
-            
-            // Optimize script loading order for heavy applications
-            // 1. Ensure all module scripts maintain their type
-            const allScripts = Array.from(doc.querySelectorAll('script[src]')) as HTMLScriptElement[];
-            const moduleScripts: HTMLScriptElement[] = [];
-            const regularScripts: HTMLScriptElement[] = [];
-            
-            allScripts.forEach(script => {
-                const originalType = script.getAttribute('type');
-                const src = script.getAttribute('src');
-                
-                // Preserve module type if it was originally a module
-                if (originalType === 'module' && script.getAttribute('type') !== 'text/babel') {
-                    script.setAttribute('type', 'module');
-                    moduleScripts.push(script);
-                } else if (!originalType || originalType === 'text/javascript') {
-                    regularScripts.push(script);
-                }
-                
-                // Add defer/async attributes for better loading performance
-                if (!script.hasAttribute('defer') && !script.hasAttribute('async')) {
-                    // For heavy apps, use defer for better parallel loading
-                    if (script.type === 'module') {
-                        script.setAttribute('defer', '');
-                    } else {
-                        // Regular scripts can use async for non-blocking loading
-                        script.setAttribute('async', '');
-                    }
-                }
-                
-                // Add retry mechanism for failed script loads
-                script.dataset.retryCount = '0';
-            });
-            
-            // Sort scripts by dependencies (simple heuristic: smaller files first, then larger)
-            // This helps with faster initial rendering
-            const sortedScripts = [...moduleScripts, ...regularScripts].sort((a, b) => {
-                const aSrc = a.getAttribute('src') || '';
-                const bSrc = b.getAttribute('src') || '';
-                // Prioritize smaller utility files over large app files
-                if (aSrc.includes('utils') || aSrc.includes('helpers')) return -1;
-                if (bSrc.includes('utils') || bSrc.includes('helpers')) return 1;
-                return 0;
-            });
-            
-            // Reorder scripts in DOM for optimal loading
-            sortedScripts.forEach((script, index) => {
-                if (script.parentNode) {
-                    script.parentNode.removeChild(script);
-                    if (index === 0) {
-                        // Insert after Babel/importmap
-                        const insertPoint = doc.querySelector('script[type="importmap"]')?.nextSibling || 
-                                          doc.querySelector('script[src*="babel"]')?.nextSibling ||
-                                          doc.head.lastChild;
-                        if (insertPoint) {
-                            doc.head.insertBefore(script, insertPoint.nextSibling);
-                        } else {
-                            doc.head.appendChild(script);
-                        }
-                    } else {
-                        doc.head.appendChild(script);
-                    }
-                }
-            });
-            
-            
-            // Add loading optimization script for heavy applications
-            const loadingOptimizer = doc.createElement('script');
-            loadingOptimizer.textContent = `
-                (function() {
-                    // Optimize for heavy applications with code splitting and dynamic imports
-                    
-                    // Support for dynamic imports (common in heavy React/Vue apps)
-                    if (!window.__dynamicImportMap) {
-                        window.__dynamicImportMap = new Map();
-                    }
-                    
-                    // Intercept dynamic imports to resolve blob URLs
-                    const originalImport = window.__import || (() => {
-                        throw new Error('Dynamic imports not supported');
-                    });
-                    
-                    // Preload critical resources using requestIdleCallback
-                    if ('requestIdleCallback' in window) {
-                        requestIdleCallback(function() {
-                            // Preload stylesheets
-                            const links = document.querySelectorAll('link[rel="stylesheet"]');
-                            links.forEach(link => {
-                                if (!link.href.startsWith('http')) {
-                                    const preload = document.createElement('link');
-                                    preload.rel = 'preload';
-                                    preload.as = 'style';
-                                    preload.href = link.href;
-                                    document.head.appendChild(preload);
-                                }
-                            });
-                            
-                            // Preload module scripts
-                            const moduleScripts = document.querySelectorAll('script[type="module"][src]');
-                            moduleScripts.forEach(script => {
-                                const preload = document.createElement('link');
-                                preload.rel = 'modulepreload';
-                                preload.href = script.src;
-                                document.head.appendChild(preload);
-                            });
-                        }, { timeout: 2000 });
-                    }
-                    
-                    // Optimize for large applications: use Intersection Observer for lazy loading
-                    if ('IntersectionObserver' in window) {
-                        const imageObserver = new IntersectionObserver((entries) => {
-                            entries.forEach(entry => {
-                                if (entry.isIntersecting) {
-                                    const img = entry.target;
-                                    if (img.dataset.src) {
-                                        img.src = img.dataset.src;
-                                        img.removeAttribute('data-src');
-                                        imageObserver.unobserve(img);
-                                    }
-                                }
-                            });
-                        });
-                        
-                        // Observe all images with data-src (lazy loaded)
-                        document.querySelectorAll('img[data-src]').forEach(img => {
-                            imageObserver.observe(img);
-                        });
-                    }
-                    
-                    // Performance optimization: batch DOM updates
-                    let rafScheduled = false;
-                    const pendingUpdates = [];
-                    const scheduleUpdate = (fn) => {
-                        pendingUpdates.push(fn);
-                        if (!rafScheduled) {
-                            rafScheduled = true;
-                            requestAnimationFrame(() => {
-                                pendingUpdates.forEach(update => update());
-                                pendingUpdates.length = 0;
-                                rafScheduled = false;
-                            });
-                        }
-                    };
-                    
-                    // Expose for heavy apps that need it
-                    window.__scheduleUpdate = scheduleUpdate;
-                })();
-            `;
-            doc.head.appendChild(loadingOptimizer);
-
-                return new XMLSerializer().serializeToString(doc);
-            };
-            
-            // Step 1: Process all HTML files to update asset references (HTML anchor tags will be updated in step 3)
-            const processedHtmlFiles = new Map<string, string>();
-            for (const htmlFileItem of htmlFiles) {
-                const processed = processHtmlFile(htmlFileItem.content, htmlFileItem.fileName, htmlFileItem.fileName === htmlFile.fileName);
-                processedHtmlFiles.set(htmlFileItem.fileName, processed);
-            }
-            
-            // Step 2: Create initial blob URLs for all HTML files (without HTML link updates yet)
-            // These will be kept alive and added to assetUrls to prevent premature revocation
-            const initialHtmlBlobs = new Map<string, string>();
-            for (const htmlFileItem of htmlFiles) {
-                const processedHtml = processedHtmlFiles.get(htmlFileItem.fileName)!;
-                const htmlBlob = new Blob([processedHtml], { type: 'text/html' });
-                const htmlBlobUrl = URL.createObjectURL(htmlBlob);
-                initialHtmlBlobs.set(htmlFileItem.fileName, htmlBlobUrl);
-                // Add to assetUrls to keep it alive - we'll remove it later if replaced
-                assetUrls.push(htmlBlobUrl);
-            }
-            
-            // Step 3: Update anchor tags in all HTML files to point to initial blob URLs, create final blobs
-            // Helper function to find matching HTML file blob URL
-            const findHtmlBlobUrl = (href: string, blobMap: Map<string, string>): string | null => {
-                if (!href) return null;
-                
-                // Skip external links, anchors, and special protocols
-                if (href.startsWith('http://') || href.startsWith('https://') || 
-                    href.startsWith('mailto:') || href.startsWith('tel:') || 
-                    href.startsWith('#') || href.startsWith('javascript:') ||
-                    href.startsWith('data:') || href.startsWith('blob:')) {
-                    return null;
-                }
-                
-                // Extract the path
-                let cleanPath = href.split('?')[0].split('#')[0];
-                if (cleanPath.startsWith('/')) {
-                    cleanPath = cleanPath.substring(1);
-                }
-                if (cleanPath.startsWith('./')) {
-                    cleanPath = cleanPath.substring(2);
-                }
-                
-                // Check all possible path variations
-                const pathVariations = [
-                    cleanPath,
-                    `/${cleanPath}`,
-                    `./${cleanPath}`,
-                    cleanPath.split('/').pop() || cleanPath,
-                    cleanPath.replace(/\.html$/i, ''),
-                ];
-                
-                for (const pathVar of pathVariations) {
-                    if (blobMap.has(pathVar)) {
-                        return blobMap.get(pathVar)!;
-                    }
-                }
-                
-                // Also check by iterating through HTML files for fuzzy matching
-                for (const otherHtmlFile of htmlFiles) {
-                    const otherFileName = otherHtmlFile.fileName;
-                    const otherFileNameClean = otherFileName.split('/').pop() || otherFileName;
-                    const otherFileNameNoExt = otherFileNameClean.replace(/\.html$/i, '');
-                    const cleanPathBase = cleanPath.split('/').pop() || cleanPath;
-                    const cleanPathNoExt = cleanPathBase.replace(/\.html$/i, '');
-                    
-                    // Match by full path, filename, or filename without extension
-                    if (otherFileName === cleanPath || 
-                        otherFileName === `/${cleanPath}` || 
-                        otherFileName === `./${cleanPath}` ||
-                        otherFileNameClean === cleanPath ||
-                        otherFileNameClean === cleanPathBase ||
-                        otherFileNameNoExt === cleanPathNoExt) {
-                        const found = blobMap.get(otherFileName) || 
-                                     blobMap.get(`/${otherFileName}`) ||
-                                     blobMap.get(otherFileNameClean);
-                        if (found) return found;
-                    }
-                }
-                
-                return null;
-            };
-            
-            // First pass: Create final blob URLs directly with correct links
-            // We'll do this in two iterations to ensure all blob URLs exist before updating links
-            const finalHtmlBlobs = new Map<string, string>();
-            
-            // Iteration 1: Create all final blob URLs first (with links pointing to initial blob URLs temporarily)
-            // IMPORTANT: We keep initial blob URLs alive until we've created all final blobs
-            for (const htmlFileItem of htmlFiles) {
-                const processedHtml = processedHtmlFiles.get(htmlFileItem.fileName)!;
-                const doc = new DOMParser().parseFromString(processedHtml, 'text/html');
-                
-                // Update anchor tags to use initial blob URLs (temporary - will be updated in iteration 2)
-                doc.querySelectorAll('a[href]').forEach(link => {
-                    const href = link.getAttribute('href');
-                    if (!href) return;
-                    
-                    // Skip external links
-                    if (href.startsWith('http://') || href.startsWith('https://') || 
-                        href.startsWith('mailto:') || href.startsWith('tel:') || 
-                        href.startsWith('#') || href.startsWith('javascript:') ||
-                        href.startsWith('data:')) {
-                        return;
-                    }
-                    
-                    const targetBlobUrl = findHtmlBlobUrl(href, initialHtmlBlobs);
-                    if (targetBlobUrl) {
-                        // Preserve query string and hash
-                        const queryIndex = href.indexOf('?');
-                        const hashIndex = href.indexOf('#');
-                        let queryHash = '';
-                        if (queryIndex !== -1) {
-                            queryHash = href.substring(queryIndex);
-                        } else if (hashIndex !== -1) {
-                            queryHash = href.substring(hashIndex);
-                        }
-                        link.setAttribute('href', targetBlobUrl + queryHash);
-                    }
-                });
-                
-                // Create final blob (will update links in next iteration)
-                const finalHtml = new XMLSerializer().serializeToString(doc);
-                const finalBlob = new Blob([finalHtml], { type: 'text/html' });
-                const finalBlobUrl = URL.createObjectURL(finalBlob);
-                finalHtmlBlobs.set(htmlFileItem.fileName, finalBlobUrl);
-                assetUrls.push(finalBlobUrl); // Add to assetUrls to keep it alive
-                
-                // Store in htmlBlobMap
-                htmlBlobMap.set(htmlFileItem.fileName, finalBlobUrl);
-                htmlBlobMap.set(`/${htmlFileItem.fileName}`, finalBlobUrl);
-                htmlBlobMap.set(`./${htmlFileItem.fileName}`, finalBlobUrl);
-                
-                const justFileName = htmlFileItem.fileName.split('/').pop() || htmlFileItem.fileName;
-                if (justFileName !== htmlFileItem.fileName) {
-                    htmlBlobMap.set(justFileName, finalBlobUrl);
-                    htmlBlobMap.set(justFileName.replace(/\.html$/i, ''), finalBlobUrl);
-                }
-            }
-            
-            // Iteration 2: Update all final blobs to have links pointing to final blob URLs
-            const updatedFinalBlobs = new Map<string, string>();
-            for (const htmlFileItem of htmlFiles) {
-                const currentBlobUrl = finalHtmlBlobs.get(htmlFileItem.fileName);
-                if (!currentBlobUrl) continue;
-                
-                // Fetch current HTML
-                const response = await fetch(currentBlobUrl);
-                const currentHtml = await response.text();
-                const doc = new DOMParser().parseFromString(currentHtml, 'text/html');
-                
-                // Update anchor tags to point to FINAL blob URLs
-                let linksUpdated = false;
-                doc.querySelectorAll('a[href]').forEach(link => {
-                    const href = link.getAttribute('href');
-                    if (!href) return;
-                    
-                    // Skip external links
-                    if (href.startsWith('http://') || href.startsWith('https://') || 
-                        href.startsWith('mailto:') || href.startsWith('tel:') || 
-                        href.startsWith('#') || href.startsWith('javascript:') ||
-                        href.startsWith('data:')) {
-                        return;
-                    }
-                    
-                    // Extract original path (even if it's a blob URL)
-                    let originalPath = href;
-                    if (href.startsWith('blob:')) {
-                        // Find which HTML file this blob URL corresponds to
-                        const blobUrlBase = href.split('?')[0].split('#')[0];
-                        
-                        // Check if it's already a final blob URL
-                        let isFinal = false;
-                        for (const [fileName, finalBlobUrl] of finalHtmlBlobs.entries()) {
-                            if (finalBlobUrl === blobUrlBase) {
-                                // Already a final blob URL, no need to update
-                                isFinal = true;
-                                break;
-                            }
-                        }
-                        
-                        if (!isFinal) {
-                            // It's an initial blob URL, find the corresponding HTML file
-                            for (const [fileName, initialBlobUrl] of initialHtmlBlobs.entries()) {
-                                if (initialBlobUrl === blobUrlBase) {
-                                    originalPath = fileName;
-                                    break;
-                                }
-                            }
-                        } else {
-                            return; // Already correct
-                        }
-                    }
-                    
-                    // Find the correct final blob URL
-                    const targetFinalBlobUrl = findHtmlBlobUrl(originalPath, finalHtmlBlobs);
-                    if (targetFinalBlobUrl) {
-                        const currentTarget = href.split('?')[0].split('#')[0];
-                        if (targetFinalBlobUrl !== currentTarget) {
-                            // Preserve query string and hash
-                            const queryIndex = href.indexOf('?');
-                            const hashIndex = href.indexOf('#');
-                            let queryHash = '';
-                            if (queryIndex !== -1) {
-                                queryHash = href.substring(queryIndex);
-                            } else if (hashIndex !== -1) {
-                                queryHash = href.substring(hashIndex);
-                            }
-                            link.setAttribute('href', targetFinalBlobUrl + queryHash);
-                            linksUpdated = true;
-                        }
-                    }
-                });
-                
-                // Create updated blob if links were changed
-                if (linksUpdated) {
-                    const updatedHtml = new XMLSerializer().serializeToString(doc);
-                    const updatedBlob = new Blob([updatedHtml], { type: 'text/html' });
-                    const updatedBlobUrl = URL.createObjectURL(updatedBlob);
-                    
-                    // Add new blob URL to assetUrls (keep both old and new alive)
-                    // We'll keep the old one in assetUrls too to prevent any race conditions
-                    assetUrls.push(updatedBlobUrl);
-                    
-                    // CRITICAL: Do NOT revoke currentBlobUrl - it might still be loading
-                    // Both old and new blob URLs will be kept alive until next deployment
-                    
-                    updatedFinalBlobs.set(htmlFileItem.fileName, updatedBlobUrl);
-                    htmlBlobMap.set(htmlFileItem.fileName, updatedBlobUrl);
-                    htmlBlobMap.set(`/${htmlFileItem.fileName}`, updatedBlobUrl);
-                    htmlBlobMap.set(`./${htmlFileItem.fileName}`, updatedBlobUrl);
-                    
-                    const justFileName = htmlFileItem.fileName.split('/').pop() || htmlFileItem.fileName;
-                    if (justFileName !== htmlFileItem.fileName) {
-                        htmlBlobMap.set(justFileName, updatedBlobUrl);
-                        htmlBlobMap.set(justFileName.replace(/\.html$/i, ''), updatedBlobUrl);
+            if (!navigator.serviceWorker || !navigator.serviceWorker.controller) {
+                // Try to register if not active
+                if ('serviceWorker' in navigator) {
+                    await navigator.serviceWorker.register('/service-worker.js');
+                    await navigator.serviceWorker.ready;
+                    if (!navigator.serviceWorker.controller) {
+                         window.location.reload(); // Force reload to activate SW
+                         return;
                     }
                 } else {
-                    updatedFinalBlobs.set(htmlFileItem.fileName, currentBlobUrl);
+                    throw new Error("Service Worker not supported in this browser.");
                 }
             }
+
+            // Prepare files
+            const filesToSend = editableFiles.map(f => ({ ...f }));
             
-            // CRITICAL: Do NOT revoke any blob URLs during deployment
-            // All blob URLs (initial, intermediate, and final) must remain alive
-            // They will be revoked only when a new deployment starts (at the beginning of handleDeployProject)
-            // This ensures that blob URLs remain valid for navigation and loading
+            // Process HTML files to inject Babel and Error Handler
+            const htmlFiles = filesToSend.filter(f => f.fileName.toLowerCase().endsWith('.html'));
+            const needsBabel = filesToSend.some(f => /\.(jsx|tsx)$/.test(f.fileName));
             
-            // Update finalHtmlBlobs with the updated blobs
-            for (const [fileName, blobUrl] of updatedFinalBlobs.entries()) {
-                finalHtmlBlobs.set(fileName, blobUrl);
+            for (const htmlFile of htmlFiles) {
+                const doc = new DOMParser().parseFromString(htmlFile.content, 'text/html');
+                
+                // Inject Error Handler
+                const errorHandlerScript = doc.createElement('script');
+                errorHandlerScript.textContent = `
+                    window.addEventListener('error', e => console.error('Preview Error:', e.message));
+                `;
+                doc.head.appendChild(errorHandlerScript);
+                
+                // Inject Babel if needed
+                if (needsBabel) {
+                     const babelScript = doc.createElement('script'); 
+                     babelScript.src = "https://unpkg.com/@babel/standalone/babel.min.js"; 
+                     doc.head.appendChild(babelScript);
+                     
+                     // Transform scripts to text/babel
+                     doc.querySelectorAll('script[src]').forEach(s => {
+                         const src = s.getAttribute('src');
+                         if (src && /\.(jsx|tsx)$/.test(src)) {
+                             s.setAttribute('type', 'text/babel');
+                             s.setAttribute('data-type', 'module');
+                         }
+                     });
+                }
+                
+                htmlFile.content = new XMLSerializer().serializeToString(doc);
             }
+
+            // Send to SW
+            const messageChannel = new MessageChannel();
+            messageChannel.port1.onmessage = (event) => {
+                if (event.data.type === 'FILES_UPDATED') {
+                    setDeployment({ 
+                        mainUrl: '/_preview/index.html', 
+                        assetUrls: [] 
+                    });
+                    
+                    if (activeTab !== 'preview') {
+                        setActiveTab('preview');
+                    }
+                    setIsDeploying(false);
+                }
+            };
+
+            navigator.serviceWorker.controller.postMessage({
+                type: 'UPDATE_FILES',
+                files: filesToSend
+            }, [messageChannel.port2]);
             
-            // Get the main HTML file blob URL (use updated final blobs)
-            const mainUrl = updatedFinalBlobs.get(htmlFile.fileName) || 
-                           finalHtmlBlobs.get(htmlFile.fileName) ||
-                           htmlBlobMap.get(htmlFile.fileName) || 
-                           htmlBlobMap.get(`/${htmlFile.fileName}`) || 
-                           htmlBlobMap.get(htmlFile.fileName.split('/').pop() || htmlFile.fileName);
-            if (!mainUrl) {
-                throw new Error("Failed to create blob URL for main HTML file");
-            }
-            
-            // Store the hash of deployed files to detect changes later
-            lastDeployedFilesRef.current = JSON.stringify(editableFiles.map(f => ({ fileName: f.fileName, content: f.content })));
-            
-            setDeployment({ mainUrl, assetUrls }); 
-            // Only switch to preview if not already there (to avoid infinite loop)
-            if (activeTab !== 'preview') {
-                setActiveTab('preview');
-            }
         } catch (e: any) { 
             setDeployError(e.message); 
-        } finally { 
-            setIsDeploying(false); 
+            setIsDeploying(false);
         }
-    }, [editableFiles, deployment, activeTab]); // Include dependencies to ensure latest values are used
+    }, [editableFiles, activeTab]);
 
     // Auto-redeploy when switching to preview tab if there are code changes
     // This ensures the preview always shows the latest code changes
