@@ -1,144 +1,253 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    
-    <!-- Favicons (will be updated by theme-detector.js based on system theme) -->
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="icon" type="image/png" sizes="16x16" href="/icons/light/favicon-16x16.png" id="favicon-16" />
-    <link rel="icon" type="image/png" sizes="32x32" href="/icons/light/favicon-32x32.png" id="favicon-32" />
-    <link rel="apple-touch-icon" sizes="152x152" href="/icons/light/apple-touch-icon-152x152.png" id="apple-icon-152" />
-    <link rel="apple-touch-icon" sizes="167x167" href="/icons/light/apple-touch-icon-167x167.png" id="apple-icon-167" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/icons/light/apple-touch-icon-180x180.png" id="apple-icon-180" />
-    
-    <!-- Primary Meta Tags -->
-    <title>DevFlow.AI — The AI-Powered Developer Command Center</title>
-    <meta name="title" content="DevFlow.AI — The AI-Powered Developer Command Center" />
-    <meta name="description" content="An all-in-one AI-powered development assistant that helps developers plan, build, debug, document, and deploy projects without leaving the IDE. It acts like a personal co-pilot for full project lifecycle management." />
-    <meta name="keywords" content="AI developer tools, code assistant, IDE integration, developer workflow, AI coding, project management, code generation, developer productivity" />
-    <meta name="author" content="DevFlow.AI Team" />
-    
-    <!-- Theme Color (Light & Dark) -->
-    <meta name="theme-color" content="#3b82f6" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#121212" media="(prefers-color-scheme: dark)" />
-    
-    <!-- PWA Manifest -->
-    <link rel="manifest" href="/manifest.json" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    
-    <!-- Apple iOS PWA Meta Tags -->
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="DevFlow.AI" />
-    
-    <!-- iOS Splash Screens (Light Mode) -->
-    <link rel="apple-touch-startup-image" media="(prefers-color-scheme: light) and (device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2)" href="/splash/light/iphone-se.png" />
-    <link rel="apple-touch-startup-image" media="(prefers-color-scheme: light) and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)" href="/splash/light/iphone-8.png" />
-    <link rel="apple-touch-startup-image" media="(prefers-color-scheme: light) and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2)" href="/splash/light/iphone-xr.png" />
-    <link rel="apple-touch-startup-image" media="(prefers-color-scheme: light) and (device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)" href="/splash/light/iphone-xs.png" />
-    <link rel="apple-touch-startup-image" media="(prefers-color-scheme: light) and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3)" href="/splash/light/iphone-xs-max.png" />
-    <link rel="apple-touch-startup-image" media="(prefers-color-scheme: light) and (device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3)" href="/splash/light/iphone-14-pro-max.png" />
-    <link rel="apple-touch-startup-image" media="(prefers-color-scheme: light) and (device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2)" href="/splash/light/ipad.png" />
-    <link rel="apple-touch-startup-image" media="(prefers-color-scheme: light) and (device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2)" href="/splash/light/ipad-pro-12.png" />
-    <link rel="apple-touch-startup-image" media="(prefers-color-scheme: light) and (device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2)" href="/splash/light/ipad-pro-12-landscape.png" />
-    
-    <!-- iOS Splash Screens (Dark Mode) -->
-    <link rel="apple-touch-startup-image" media="(prefers-color-scheme: dark) and (device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2)" href="/splash/dark/iphone-se.png" />
-    <link rel="apple-touch-startup-image" media="(prefers-color-scheme: dark) and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)" href="/splash/dark/iphone-8.png" />
-    <link rel="apple-touch-startup-image" media="(prefers-color-scheme: dark) and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2)" href="/splash/dark/iphone-xr.png" />
-    <link rel="apple-touch-startup-image" media="(prefers-color-scheme: dark) and (device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)" href="/splash/dark/iphone-xs.png" />
-    <link rel="apple-touch-startup-image" media="(prefers-color-scheme: dark) and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3)" href="/splash/dark/iphone-xs-max.png" />
-    <link rel="apple-touch-startup-image" media="(prefers-color-scheme: dark) and (device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3)" href="/splash/dark/iphone-14-pro-max.png" />
-    <link rel="apple-touch-startup-image" media="(prefers-color-scheme: dark) and (device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2)" href="/splash/dark/ipad.png" />
-    <link rel="apple-touch-startup-image" media="(prefers-color-scheme: dark) and (device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2)" href="/splash/dark/ipad-pro-12.png" />
-    <link rel="apple-touch-startup-image" media="(prefers-color-scheme: dark) and (device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2)" href="/splash/dark/ipad-pro-12-landscape.png" />
-    
-    <!-- Open Graph / Facebook / WhatsApp -->
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://devflow-ai-ztwh.onrender.com/" />
-    <meta property="og:title" content="DevFlow.AI — The AI-Powered Developer Command Center" />
-    <meta property="og:description" content="An all-in-one AI-powered development assistant that helps developers plan, build, debug, document, and deploy projects without leaving the IDE. It acts like a personal co-pilot for full project lifecycle management." />
-    <meta property="og:image" content="https://devflow-ai-ztwh.onrender.com/og-image.png" />
-    <meta property="og:image:secure_url" content="https://devflow-ai-ztwh.onrender.com/og-image.png" />
-    <meta property="og:image:type" content="image/png" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="DevFlow.AI - The AI-Powered Developer Command Center" />
-    <meta property="og:site_name" content="DevFlow.AI" />
-    <meta property="og:locale" content="en_US" />
-    
-    <!-- WhatsApp specific (uses Open Graph but these help) -->
-    <meta property="og:image:url" content="https://devflow-ai-ztwh.onrender.com/og-image.png" />
-    
-    <!-- Twitter -->
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:url" content="https://devflow-ai-ztwh.onrender.com/" />
-    <meta name="twitter:title" content="DevFlow.AI — The AI-Powered Developer Command Center" />
-    <meta name="twitter:description" content="An all-in-one AI-powered development assistant that helps developers plan, build, debug, document, and deploy projects without leaving the IDE. It acts like a personal co-pilot for full project lifecycle management." />
-    <meta name="twitter:image" content="https://devflow-ai-ztwh.onrender.com/og-image.png" />
-    <meta name="twitter:image:alt" content="DevFlow.AI - The AI-Powered Developer Command Center" />
-    
-    <!-- Canonical URL -->
-    <link rel="canonical" href="https://devflow-ai-ztwh.onrender.com/" />
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            colors: {
-              'gray-900': '#121212',
-              'gray-800': '#1e1e1e',
-              'gray-700': '#2d2d2d',
-              'gray-600': '#3c3c3c',
-              'gray-400': '#a0a0a0',
-              'gray-200': '#e0e0e0',
-              'blue-500': '#3b82f6',
-              'blue-600': '#2563eb',
-            },
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+
+  <!-- Favicons (will be updated by theme-detector.js based on system theme) -->
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/icons/light/favicon-16x16.png" id="favicon-16" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/icons/light/favicon-32x32.png" id="favicon-32" />
+  <link rel="apple-touch-icon" sizes="152x152" href="/icons/light/apple-touch-icon-152x152.png" id="apple-icon-152" />
+  <link rel="apple-touch-icon" sizes="167x167" href="/icons/light/apple-touch-icon-167x167.png" id="apple-icon-167" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/icons/light/apple-touch-icon-180x180.png" id="apple-icon-180" />
+
+  <!-- Primary Meta Tags -->
+  <title>DevFlow.AI — The AI-Powered Developer Command Center</title>
+  <meta name="title" content="DevFlow.AI — The AI-Powered Developer Command Center" />
+  <meta name="description"
+    content="An all-in-one AI-powered development assistant that helps developers plan, build, debug, document, and deploy projects without leaving the IDE. It acts like a personal co-pilot for full project lifecycle management." />
+  <meta name="keywords"
+    content="AI developer tools, code assistant, IDE integration, developer workflow, AI coding, project management, code generation, developer productivity" />
+  <meta name="author" content="DevFlow.AI Team" />
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+  <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
+
+  <!-- Theme Color (Light & Dark) -->
+  <meta name="theme-color" content="#3b82f6" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#121212" media="(prefers-color-scheme: dark)" />
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="mobile-web-app-capable" content="yes" />
+
+  <!-- Apple iOS PWA Meta Tags -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="DevFlow.AI" />
+
+  <!-- iOS Splash Screens (Light Mode) -->
+  <link rel="apple-touch-startup-image"
+    media="(prefers-color-scheme: light) and (device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2)"
+    href="/splash/light/iphone-se.png" />
+  <link rel="apple-touch-startup-image"
+    media="(prefers-color-scheme: light) and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)"
+    href="/splash/light/iphone-8.png" />
+  <link rel="apple-touch-startup-image"
+    media="(prefers-color-scheme: light) and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2)"
+    href="/splash/light/iphone-xr.png" />
+  <link rel="apple-touch-startup-image"
+    media="(prefers-color-scheme: light) and (device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)"
+    href="/splash/light/iphone-xs.png" />
+  <link rel="apple-touch-startup-image"
+    media="(prefers-color-scheme: light) and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3)"
+    href="/splash/light/iphone-xs-max.png" />
+  <link rel="apple-touch-startup-image"
+    media="(prefers-color-scheme: light) and (device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3)"
+    href="/splash/light/iphone-14-pro-max.png" />
+  <link rel="apple-touch-startup-image"
+    media="(prefers-color-scheme: light) and (device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2)"
+    href="/splash/light/ipad.png" />
+  <link rel="apple-touch-startup-image"
+    media="(prefers-color-scheme: light) and (device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2)"
+    href="/splash/light/ipad-pro-12.png" />
+  <link rel="apple-touch-startup-image"
+    media="(prefers-color-scheme: light) and (device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2)"
+    href="/splash/light/ipad-pro-12-landscape.png" />
+
+  <!-- iOS Splash Screens (Dark Mode) -->
+  <link rel="apple-touch-startup-image"
+    media="(prefers-color-scheme: dark) and (device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2)"
+    href="/splash/dark/iphone-se.png" />
+  <link rel="apple-touch-startup-image"
+    media="(prefers-color-scheme: dark) and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)"
+    href="/splash/dark/iphone-8.png" />
+  <link rel="apple-touch-startup-image"
+    media="(prefers-color-scheme: dark) and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2)"
+    href="/splash/dark/iphone-xr.png" />
+  <link rel="apple-touch-startup-image"
+    media="(prefers-color-scheme: dark) and (device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)"
+    href="/splash/dark/iphone-xs.png" />
+  <link rel="apple-touch-startup-image"
+    media="(prefers-color-scheme: dark) and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3)"
+    href="/splash/dark/iphone-xs-max.png" />
+  <link rel="apple-touch-startup-image"
+    media="(prefers-color-scheme: dark) and (device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3)"
+    href="/splash/dark/iphone-14-pro-max.png" />
+  <link rel="apple-touch-startup-image"
+    media="(prefers-color-scheme: dark) and (device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2)"
+    href="/splash/dark/ipad.png" />
+  <link rel="apple-touch-startup-image"
+    media="(prefers-color-scheme: dark) and (device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2)"
+    href="/splash/dark/ipad-pro-12.png" />
+  <link rel="apple-touch-startup-image"
+    media="(prefers-color-scheme: dark) and (device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2)"
+    href="/splash/dark/ipad-pro-12-landscape.png" />
+
+  <!-- Open Graph / Facebook / WhatsApp -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://devflow-ai-ztwh.onrender.com/" />
+  <meta property="og:title" content="DevFlow.AI — The AI-Powered Developer Command Center" />
+  <meta property="og:description"
+    content="An all-in-one AI-powered development assistant that helps developers plan, build, debug, document, and deploy projects without leaving the IDE. It acts like a personal co-pilot for full project lifecycle management." />
+  <meta property="og:image" content="https://devflow-ai-ztwh.onrender.com/og-image.png" />
+  <meta property="og:image:secure_url" content="https://devflow-ai-ztwh.onrender.com/og-image.png" />
+  <meta property="og:image:type" content="image/png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="DevFlow.AI - The AI-Powered Developer Command Center" />
+  <meta property="og:site_name" content="DevFlow.AI" />
+  <meta property="og:locale" content="en_US" />
+
+  <!-- WhatsApp specific (uses Open Graph but these help) -->
+  <meta property="og:image:url" content="https://devflow-ai-ztwh.onrender.com/og-image.png" />
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:url" content="https://devflow-ai-ztwh.onrender.com/" />
+  <meta name="twitter:title" content="DevFlow.AI — The AI-Powered Developer Command Center" />
+  <meta name="twitter:description"
+    content="An all-in-one AI-powered development assistant that helps developers plan, build, debug, document, and deploy projects without leaving the IDE. It acts like a personal co-pilot for full project lifecycle management." />
+  <meta name="twitter:image" content="https://devflow-ai-ztwh.onrender.com/og-image.png" />
+  <meta name="twitter:image:alt" content="DevFlow.AI - The AI-Powered Developer Command Center" />
+
+  <!-- Canonical URL -->
+  <link rel="canonical" href="https://devflow-ai-ztwh.onrender.com/" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'gray-900': '#121212',
+            'gray-800': '#1e1e1e',
+            'gray-700': '#2d2d2d',
+            'gray-600': '#3c3c3c',
+            'gray-400': '#a0a0a0',
+            'gray-200': '#e0e0e0',
+            'blue-500': '#3b82f6',
+            'blue-600': '#2563eb',
           },
         },
+      },
+    }
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>
+    mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-okaidia.min.css" />
+
+  <!-- Theme Detector - Load early to update icons before page render -->
+  <script>
+    // Immediate theme detection to avoid flash of wrong icon
+    (function () {
+      function updateIconsImmediate() {
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          const themePath = '/icons/dark';
+          // Update favicons
+          const favicon16 = document.querySelector('link[rel="icon"][sizes="16x16"]');
+          const favicon32 = document.querySelector('link[rel="icon"][sizes="32x32"]');
+          if (favicon16) favicon16.href = themePath + '/favicon-16x16.png';
+          if (favicon32) favicon32.href = themePath + '/favicon-32x32.png';
+          // Update Apple touch icons
+          const apple152 = document.querySelector('link[rel="apple-touch-icon"][sizes="152x152"]');
+          const apple167 = document.querySelector('link[rel="apple-touch-icon"][sizes="167x167"]');
+          const apple180 = document.querySelector('link[rel="apple-touch-icon"][sizes="180x180"]');
+          if (apple152) apple152.href = themePath + '/apple-touch-icon-152x152.png';
+          if (apple167) apple167.href = themePath + '/apple-touch-icon-167x167.png';
+          if (apple180) apple180.href = themePath + '/apple-touch-icon-180x180.png';
+        }
       }
+      // Try immediately
+      updateIconsImmediate();
+      // Also try after a tiny delay to ensure DOM is ready
+      setTimeout(updateIconsImmediate, 0);
+    })();
+  </script>
+  <script src="/theme-detector.js"></script>
+
+  <link rel="stylesheet" href="/index.css">
+
+  <!-- Structured Data (JSON-LD) for SEO -->
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "DevFlow.AI",
+      "url": "https://devflow-ai-ztwh.onrender.com/",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://devflow-ai-ztwh.onrender.com/?q={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    }
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
-    <script>
-        mermaid.initialize({ startOnLoad: true, theme: 'dark' });
-    </script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-okaidia.min.css" />
-    
-    <!-- Theme Detector - Load early to update icons before page render -->
-    <script>
-      // Immediate theme detection to avoid flash of wrong icon
-      (function() {
-        function updateIconsImmediate() {
-          if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-            const themePath = '/icons/dark';
-            // Update favicons
-            const favicon16 = document.querySelector('link[rel="icon"][sizes="16x16"]');
-            const favicon32 = document.querySelector('link[rel="icon"][sizes="32x32"]');
-            if (favicon16) favicon16.href = themePath + '/favicon-16x16.png';
-            if (favicon32) favicon32.href = themePath + '/favicon-32x32.png';
-            // Update Apple touch icons
-            const apple152 = document.querySelector('link[rel="apple-touch-icon"][sizes="152x152"]');
-            const apple167 = document.querySelector('link[rel="apple-touch-icon"][sizes="167x167"]');
-            const apple180 = document.querySelector('link[rel="apple-touch-icon"][sizes="180x180"]');
-            if (apple152) apple152.href = themePath + '/apple-touch-icon-152x152.png';
-            if (apple167) apple167.href = themePath + '/apple-touch-icon-167x167.png';
-            if (apple180) apple180.href = themePath + '/apple-touch-icon-180x180.png';
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is DevFlow.AI?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "DevFlow.AI is an all-in-one AI-powered development assistant that helps developers plan, build, debug, document, and deploy projects without leaving the IDE. It acts like a personal co-pilot for full project lifecycle management."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is DevFlow.AI free to use?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes, DevFlow.AI offers a free tier that gives you access to essential features. We also have premium plans for power users and teams who need advanced capabilities and higher usage limits."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I use DevFlow.AI with my existing projects?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Absolutely! DevFlow.AI is designed to integrate seamlessly with your existing workflows. You can import your projects and start using our AI tools immediately."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What programming languages does DevFlow.AI support?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "DevFlow.AI supports a wide range of popular programming languages including JavaScript, TypeScript, Python, Java, C++, and many more. We are constantly adding support for new languages."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How does the AI code generation work?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Our AI models are trained on vast amounts of code and documentation. When you describe a feature or task, the AI analyzes your request and generates high-quality, syntactically correct code that you can review and integrate into your project."
           }
         }
-        // Try immediately
-        updateIconsImmediate();
-        // Also try after a tiny delay to ensure DOM is ready
-        setTimeout(updateIconsImmediate, 0);
-      })();
+      ]
+    }
     </script>
-    <script src="/theme-detector.js"></script>
-
-<link rel="stylesheet" href="/index.css">
 </head>
-  <body class="bg-gray-900 text-gray-200 safe-area-inset">
-    <div id="root"></div>
+
+<body class="bg-gray-900 text-gray-200 safe-area-inset">
+  <div id="root"></div>
   <script type="module" src="/index.tsx"></script>
 </body>
+
 </html>

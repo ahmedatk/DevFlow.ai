@@ -4,10 +4,14 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { Sidebar, View } from './components/Sidebar';
 import { Header } from './components/Header';
 import { CodePreview } from './components/CodePreview';
+import { FAQ } from './components/FAQ';
+
+import { FeatureModal } from './components/FeatureModal';
+import { DemoModal } from './components/DemoModal';
 import { Task, GeneratedFile, ChatMessage, Project, GeneratedCode, SimulationTurn } from './types';
 import * as geminiService from './services/geminiService';
-import { 
-    SparkleIcon, FileIcon, PlusIcon, TrashIcon, TasksIcon, ChatIcon, 
+import {
+    SparkleIcon, FileIcon, PlusIcon, TrashIcon, TasksIcon, ChatIcon,
     ManagerIcon, QAIcon, CodeIcon, LogoIcon, ArchitectureIcon, ComplexityIcon,
     CommitIcon, DashboardIcon, DocsIcon, HeatmapIcon, MemoryIcon, RunReviewIcon,
     ScaffoldIcon, SimulationIcon, SnippetIcon, TeamDashboardIcon, GoogleIcon, EditorIcon, FolderIcon, FolderOpenIcon, DeployIcon, CheckIcon, SaveIcon,
@@ -69,139 +73,360 @@ const App = () => {
 };
 export default App;
 
+// --- Typewriter Component ---
+const Typewriter = ({ text, delay = 50 }: { text: string, delay?: number }) => {
+    const [currentText, setCurrentText] = useState('');
+    const [currentIndex, setCurrentIndex] = useState(0);
+
+    useEffect(() => {
+        if (currentIndex < text.length) {
+            const timeout = setTimeout(() => {
+                setCurrentText(prev => prev + text[currentIndex]);
+                setCurrentIndex(prev => prev + 1);
+            }, delay);
+            return () => clearTimeout(timeout);
+        }
+    }, [currentIndex, delay, text]);
+
+    return (
+        <span>{currentText}<span className="typewriter-cursor"></span></span>
+    );
+};
+
 // --- Landing Page Component ---
 const LandingPage = ({ onShowAuth }: { onShowAuth: () => void }) => {
     useEffect(() => {
         const handleScroll = () => {
             const scrolled = window.pageYOffset;
-            const parallaxElements = document.querySelectorAll('.parallax-layer-1, .parallax-layer-2, .parallax-layer-3');
+            const parallaxElements = document.querySelectorAll('.parallax-layer-1, .parallax-layer-2, .parallax-layer-faq, .parallax-layer-3');
             const starsLayer = document.querySelector('.stars-layer');
             const blueTint = document.querySelector('.blue-tint-overlay');
             const header = document.querySelector('header');
-            
+
             // Parallax for content layers - more subtle
             parallaxElements.forEach((element, index) => {
                 const speed = 0.1 + (index * 0.05); // Reduced speeds
                 const yPos = -(scrolled * speed);
                 (element as HTMLElement).style.transform = `translateY(${yPos}px)`;
             });
-            
+
             // Header fade on scroll
             if (header) {
                 const opacity = Math.max(0.8, 1 - scrolled / 400);
                 (header as HTMLElement).style.opacity = opacity.toString();
             }
-            
+
             // Background parallax - very subtle
             if (starsLayer) {
                 const starsYPos = -(scrolled * 0.03);
                 (starsLayer as HTMLElement).style.transform = `translateY(${starsYPos}px)`;
             }
-            
+
             if (blueTint) {
                 const tintYPos = -(scrolled * 0.01);
                 (blueTint as HTMLElement).style.transform = `translateY(${tintYPos}px)`;
             }
         };
-        
+
         window.addEventListener('scroll', handleScroll, { passive: true });
         handleScroll();
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
-    const features = [
-        { icon: <ScaffoldIcon />, name: 'AI Project Scaffolder', desc: 'Generate a full codebase from a description.' },
-        { icon: <EditorIcon />, name: 'Hierarchical Editor', desc: 'View and manage your code in a file tree.' },
-        { icon: <TasksIcon />, name: 'Kanban Board', desc: 'Visualize and manage your workflow.' },
-        { icon: <DocsIcon />, name: 'AI Documentation', desc: 'Instantly create docs from your code.' },
-        { icon: <ChatIcon />, name: 'Context-Aware Chat', desc: 'An AI that knows your project status.' },
-        { icon: <ArchitectureIcon />, name: 'Architecture Diagrams', desc: 'Visualize your code automatically.' },
-        { icon: <ComplexityIcon />, name: 'Complexity Analysis', desc: 'Understand the efficiency of your code.' },
-        { icon: <CommitIcon />, name: 'Commit Summarizer', desc: 'Generate commit messages from diffs.' },
-        { icon: <MemoryIcon />, name: 'Memory Agent', desc: 'Chat with an AI that remembers everything.' },
-        { icon: <SimulationIcon />, name: 'Agent Simulation', desc: 'Simulate a dev team to solve problems.' },
-        { icon: <HeatmapIcon />, name: 'Project Heatmap', desc: 'Visualize task complexity at a glance.' },
-        { icon: <TeamDashboardIcon />, name: 'Team Dashboard', desc: 'Get a high-level overview of progress.' },
-    ];
+    // Animation Observer
+    useEffect(() => {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-visible');
+                    entry.target.classList.remove('opacity-0'); // Ensure visibility
+                }
+            });
+        }, { threshold: 0.1, rootMargin: "0px 0px -50px 0px" });
 
-    return (
-        <div className="relative bg-black text-white min-h-screen overflow-x-hidden">
-            {/* Animated Stars and Constellations Background */}
-            <div className="fixed inset-0 stars-constellation-bg" aria-hidden="true">
-                <div className="stars-layer"></div>
-                <div className="constellations-layer"></div>
-                <div className="blue-tint-overlay"></div>
-            </div>
+        const animatedElements = document.querySelectorAll('.animate-fade-in-up, .stagger-reveal');
+        animatedElements.forEach((el) => observer.observe(el));
 
-            {/* Content */}
-            <div className="relative z-10">
-                <header className="container mx-auto px-6 py-4 flex justify-between items-center transition-opacity duration-300">
-                    <div className="flex items-center gap-2">
-                        <LogoIcon className="w-8 h-8" />
-                        <span className="text-xl font-bold">DevFlow.AI</span>
-                    </div>
-                    <button onClick={onShowAuth} className="bg-gray-700/80 backdrop-blur-sm text-white font-semibold py-2 px-4 rounded-lg hover:bg-gray-600 transition-colors border border-gray-600/50">
-                        Login / Sign Up
-                    </button>
-                </header>
+        return () => animatedElements.forEach((el) => observer.unobserve(el));
+    }, []);
 
-                <main className="container mx-auto px-6">
-                    {/* Hero Section */}
-                    <div className="py-20 text-center parallax-layer-1">
-                        <h1 className="text-5xl md:text-7xl font-extrabold leading-tight bg-gradient-to-r from-white via-blue-200 to-white bg-clip-text text-transparent">
-                            Your AI-Powered Developer Command Center
-                        </h1>
-                        <p className="mt-6 text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
-                            Plan, build, debug, and document your projects with a unified AI-native workflow, without ever leaving your IDE.
-                        </p>
-                        <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-                            <button onClick={onShowAuth} className="bg-blue-600 text-white font-semibold py-4 px-10 rounded-lg text-lg hover:bg-blue-500 transition-all transform hover:scale-105 shadow-lg shadow-blue-500/50">
-                                Get Started for Free
-                            </button>
-                            <button onClick={onShowAuth} className="border-2 border-gray-600 text-white font-semibold py-4 px-10 rounded-lg text-lg hover:border-gray-500 hover:bg-gray-800/50 transition-all backdrop-blur-sm">
-                                Watch Demo
-                            </button>
-                        </div>
-                    </div>
+    // Spotlight Effect Logic
+    const cardsRef = useRef<HTMLDivElement>(null);
 
-                    {/* Features Section */}
-                    <div className="py-16 parallax-layer-2">
-                        <div className="text-center mb-12">
-                            <h2 className="text-4xl md:text-5xl font-bold mb-4">All The Tools You Need. Unified.</h2>
-                            <p className="text-gray-400 text-lg">Everything you need to build, deploy, and scale your projects in one place</p>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {features.map((feature, index) => (
-                                <div 
-                                    key={index} 
-                                    className="bg-gray-800/60 backdrop-blur-md p-6 rounded-xl text-left border border-gray-700/50 hover:border-blue-500/50 transition-all hover:scale-[1.02] hover:shadow-lg hover:shadow-blue-500/20 group"
-                                >
-                                    <div className="text-blue-500 mb-4 group-hover:scale-110 transition-transform">{React.cloneElement(feature.icon, { className: 'w-8 h-8' })}</div>
-                                    <h3 className="text-xl font-semibold mb-2">{feature.name}</h3>
-                                    <p className="text-gray-400">{feature.desc}</p>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
+    const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+        if (!cardsRef.current) return;
 
-                    {/* CTA Section */}
-                    <div className="py-20 text-center parallax-layer-3">
-                        <div className="bg-gradient-to-r from-blue-600/20 to-purple-600/20 backdrop-blur-md p-12 rounded-2xl border border-blue-500/30 max-w-4xl mx-auto">
-                            <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready to Transform Your Development Workflow?</h2>
-                            <p className="text-gray-300 text-lg mb-8">Join thousands of developers who are already building faster with AI</p>
-                            <button onClick={onShowAuth} className="bg-blue-600 text-white font-semibold py-4 px-10 rounded-lg text-lg hover:bg-blue-500 transition-all transform hover:scale-105 shadow-lg shadow-blue-500/50">
-                                Start Building Now
-                            </button>
-                        </div>
-                    </div>
-                </main>
+        const cards = cardsRef.current.getElementsByClassName('spotlight-card');
+        for (const card of cards) {
+            const rect = (card as HTMLElement).getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            (card as HTMLElement).style.setProperty('--mouse-x', `${x}px`);
+            (card as HTMLElement).style.setProperty('--mouse-y', `${y}px`);
+        }
+    };
 
-                <footer className="relative z-10 text-center py-8 border-t border-gray-800/50">
-                    <p className="text-gray-500">&copy; {new Date().getFullYear()} DevFlow.AI. The future of development.</p>
-                </footer>
-            </div>
+
+
+const [selectedFeature, setSelectedFeature] = useState<any>(null);
+const [isDemoOpen, setIsDemoOpen] = useState(false);
+
+const features = [
+    {
+        icon: <ScaffoldIcon />,
+        name: 'AI Project Scaffolder',
+        desc: 'Generate a full codebase from a description.',
+        details: 'The AI Project Scaffolder is your starting point for any new idea. Instead of spending hours setting up boilerplate code, configuring build tools, and structuring directories, simply describe your project in plain English. Our advanced AI analyzes your requirements and generates a production-ready project structure complete with necessary dependencies, configuration files, and initial code.',
+        benefits: [
+            'Save hours of initial setup time',
+            'Get industry-standard project structures',
+            'Automatic dependency management',
+            'Ready-to-run development environment'
+        ]
+    },
+    {
+        icon: <EditorIcon />,
+        name: 'Hierarchical Editor',
+        desc: 'View and manage your code in a file tree.',
+        details: 'Experience a familiar yet powerful editing environment right in your browser. The Hierarchical Editor provides a full file tree view, syntax highlighting for over 50 languages, and intelligent code completion. It seamlessly integrates with the AI tools, allowing you to apply generated code directly to your files with a single click.',
+        benefits: [
+            'VS Code-like editing experience',
+            'Seamless AI integration',
+            'Real-time syntax highlighting',
+            'Easy file management and navigation'
+        ]
+    },
+    {
+        icon: <TasksIcon />,
+        name: 'Kanban Board',
+        desc: 'Visualize and manage your workflow.',
+        details: 'Stay organized with our integrated Kanban Board. The AI automatically decomposes your project into manageable tasks and populates the board. You can drag and drop tasks between "To Do", "In Progress", and "Done" states, ensuring you always know what to work on next. It acts as your personal project manager.',
+        benefits: [
+            'Automated task generation',
+            'Visual progress tracking',
+            'Drag-and-drop interface',
+            'Clear project roadmap'
+        ]
+    },
+    {
+        icon: <DocsIcon />,
+        name: 'AI Documentation',
+        desc: 'Instantly create docs from your code.',
+        details: 'Documentation is often neglected, but not with DevFlow.AI. Our Documentation Generator scans your codebase and automatically creates comprehensive documentation, including API references, README files, and inline comments. Keep your project well-documented without writing a single line of manual explanation.',
+        benefits: [
+            'Always up-to-date documentation',
+            'Professional README generation',
+            'Detailed API references',
+            'Better code maintainability'
+        ]
+    },
+    {
+        icon: <ChatIcon />,
+        name: 'Context-Aware Chat',
+        desc: 'An AI that knows your project status.',
+        details: 'Stop copy-pasting code into external chat windows. Our Context-Aware Chat lives inside your IDE and understands your entire project structure, open files, and recent changes. Ask questions like "Why is this function failing?" or "How do I add authentication?" and get answers that are specifically tailored to your current codebase.',
+        benefits: [
+            'No context switching required',
+            'Deep understanding of your code',
+            'Instant debugging assistance',
+            'Personalized coding advice'
+        ]
+    },
+    {
+        icon: <ArchitectureIcon />,
+        name: 'Architecture Diagrams',
+        desc: 'Visualize your code automatically.',
+        details: 'Understanding complex systems is easier with visuals. The Architecture Diagram tool automatically analyzes your code imports and dependencies to generate interactive Mermaid diagrams. Visualize class hierarchies, data flow, and system modules to get a high-level view of your project\'s structure.',
+        benefits: [
+            'Instant visual system overview',
+            'Identify dependency issues',
+            'Better architectural planning',
+            'Great for onboarding new team members'
+        ]
+    },
+    {
+        icon: <ComplexityIcon />,
+        name: 'Complexity Analysis',
+        desc: 'Understand the efficiency of your code.',
+        details: 'Write better, more efficient code with our Complexity Analysis tool. It scans your files to calculate Cyclomatic Complexity and other metrics, highlighting areas that are too complex or prone to bugs. Get actionable suggestions on how to refactor and simplify your code for better performance and maintainability.',
+        benefits: [
+            'Identify technical debt early',
+            'Improve code readability',
+            'Reduce bug potential',
+            'Data-driven refactoring'
+        ]
+    },
+    {
+        icon: <CommitIcon />,
+        name: 'Commit Summarizer',
+        desc: 'Generate commit messages from diffs.',
+        details: 'Never write a vague "bug fixes" commit message again. The Commit Summarizer analyzes your staged changes and generates descriptive, conventional commit messages automatically. It ensures your git history is clean, professional, and easy to understand for your team.',
+        benefits: [
+            'Professional git history',
+            'Time-saving automation',
+            'Accurate change descriptions',
+            'Standardized commit format'
+        ]
+    },
+    {
+        icon: <MemoryIcon />,
+        name: 'Memory Agent',
+        desc: 'Chat with an AI that remembers everything.',
+        details: 'The Memory Agent is your long-term project partner. Unlike standard chat sessions that reset, the Memory Agent retains information across sessions. It remembers your architectural decisions, preferred coding style, and past discussions, providing increasingly personalized and relevant assistance as your project evolves.',
+        benefits: [
+            'Long-term context retention',
+            'Personalized coding style',
+            'Remembers past decisions',
+            'Continuous learning assistant'
+        ]
+    },
+    {
+        icon: <SimulationIcon />,
+        name: 'Agent Simulation',
+        desc: 'Simulate a dev team to solve problems.',
+        details: 'Unleash the power of a virtual development team. The Agent Simulation creates specialized AI agents (e.g., Product Manager, Lead Developer, QA Engineer) that collaborate to solve complex problems. Watch them discuss, plan, and execute tasks together to find the best solution for your challenge.',
+        benefits: [
+            'Multi-perspective problem solving',
+            'Automated peer review',
+            'Comprehensive solution planning',
+            'Simulated team collaboration'
+        ]
+    },
+    {
+        icon: <HeatmapIcon />,
+        name: 'Project Heatmap',
+        desc: 'Visualize task complexity at a glance.',
+        details: 'Get a bird\'s-eye view of your project\'s activity and complexity. The Project Heatmap visualizes which files are being modified most frequently and where the most complex logic resides. It helps you identify hotspots that might need refactoring or extra testing attention.',
+        benefits: [
+            'Identify active development areas',
+            'Spot potential bottlenecks',
+            'Visual complexity tracking',
+            'Data-driven project management'
+        ]
+    },
+    {
+        icon: <TeamDashboardIcon />,
+        name: 'Team Dashboard',
+        desc: 'Get a high-level overview of progress.',
+        details: 'Keep your team aligned and informed. The Team Dashboard aggregates data from all other tools to provide a high-level overview of project health, recent activity, and upcoming tasks. It\'s the perfect command center for team leads and project managers.',
+        benefits: [
+            'Centralized project status',
+            'Team velocity tracking',
+            'Better resource allocation',
+            'Transparent progress monitoring'
+        ]
+    },
+];
+
+return (
+    <div className="relative bg-black text-white min-h-screen overflow-x-hidden">
+        {/* Animated Stars and Constellations Background */}
+        <div className="fixed inset-0 stars-constellation-bg" aria-hidden="true">
+            <div className="stars-layer"></div>
+            <div className="constellations-layer"></div>
+            <div className="blue-tint-overlay"></div>
         </div>
-    );
+
+        {/* Content */}
+        <div className="relative z-10">
+            <header className="container mx-auto px-6 py-4 flex justify-between items-center transition-opacity duration-300">
+                <div className="flex items-center gap-2">
+                    <LogoIcon className="w-8 h-8" />
+                    <span className="text-xl font-bold">DevFlow.AI</span>
+                </div>
+                <button onClick={onShowAuth} className="bg-gray-700/80 backdrop-blur-sm text-white font-semibold py-2 px-4 rounded-lg hover:bg-gray-600 transition-colors border border-gray-600/50">
+                    Login / Sign Up
+                </button>
+            </header>
+
+            <main className="container mx-auto px-6">
+                {/* Hero Section */}
+                <div className="py-20 text-center parallax-layer-1">
+                    <h1 className="text-5xl md:text-7xl font-extrabold leading-tight bg-gradient-to-r from-white via-blue-200 to-white bg-clip-text text-transparent animate-fade-in-up animate-gradient-text">
+                        Your AI-Powered Developer Command Center
+                    </h1>
+                    <p className="mt-6 text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed animate-fade-in-up delay-100 min-h-[3.5rem]">
+                        <Typewriter text="Plan, build, debug, and document your projects with a unified AI-native workflow, without ever leaving your IDE." />
+                    </p>
+                    <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in-up delay-200">
+                        <button onClick={onShowAuth} className="bg-blue-600 text-white font-semibold py-4 px-10 rounded-lg text-lg hover:bg-blue-500 transition-all transform hover:scale-105 shadow-lg shadow-blue-500/50 animate-glow-pulse">
+                            Get Started for Free
+                        </button>
+                        <button onClick={() => setIsDemoOpen(true)} className="border-2 border-gray-600 text-white font-semibold py-4 px-10 rounded-lg text-lg hover:border-gray-500 hover:bg-gray-800/50 transition-all backdrop-blur-sm">
+                            Watch Demo
+                        </button>
+                    </div>
+                </div>
+
+                {/* Features Section */}
+                <div className="py-16 parallax-layer-2">
+                    <div className="text-center mb-12 animate-fade-in-up">
+                        <h2 className="text-4xl md:text-5xl font-bold mb-4">All The Tools You Need. Unified.</h2>
+                        <p className="text-gray-400 text-lg">Everything you need to build, deploy, and scale your projects in one place</p>
+                    </div>
+                    <div
+                        ref={cardsRef}
+                        onMouseMove={handleMouseMove}
+                        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 stagger-reveal"
+                    >
+                        {features.map((feature, index) => (
+                            <div
+                                key={index}
+                                onClick={() => setSelectedFeature(feature)}
+                                className="spotlight-card bg-gray-800/60 backdrop-blur-md p-6 rounded-xl text-left border border-gray-700/50 hover:border-blue-500/50 transition-all hover:scale-[1.02] hover:shadow-lg hover:shadow-blue-500/20 group cursor-pointer relative overflow-hidden"
+                            >
+                                <div className="absolute inset-0 bg-gradient-to-br from-blue-600/5 to-purple-600/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                <div className="relative z-10">
+                                    <div className="text-blue-500 mb-4 group-hover:scale-110 transition-transform duration-300">{React.cloneElement(feature.icon, { className: 'w-8 h-8' })}</div>
+                                    <h3 className="text-xl font-semibold mb-2 group-hover:text-blue-400 transition-colors">{feature.name}</h3>
+                                    <p className="text-gray-400 mb-4">{feature.desc}</p>
+                                    <div className="flex items-center text-sm text-blue-500 font-medium opacity-0 group-hover:opacity-100 transition-opacity transform translate-y-2 group-hover:translate-y-0">
+                                        Learn more <span className="ml-1">&rarr;</span>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+
+                </div>
+
+
+                {/* FAQ Section */}
+                <div className="parallax-layer-faq">
+                    <FAQ />
+                </div>
+
+                {/* CTA Section */}
+                <div className="py-20 text-center parallax-layer-3">
+                    <div className="bg-gradient-to-r from-blue-600/20 to-purple-600/20 backdrop-blur-md p-12 rounded-2xl border border-blue-500/30 max-w-4xl mx-auto animate-fade-in-up">
+                        <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready to Transform Your Development Workflow?</h2>
+                        <p className="text-gray-300 text-lg mb-8">Join thousands of developers who are already building faster with AI</p>
+                        <button onClick={onShowAuth} className="bg-blue-600 text-white font-semibold py-4 px-10 rounded-lg text-lg hover:bg-blue-500 transition-all transform hover:scale-105 shadow-lg shadow-blue-500/50 animate-glow-pulse">
+                            Start Building Now
+                        </button>
+                    </div>
+                </div>
+            </main>
+
+            <footer className="relative z-10 text-center py-8 border-t border-gray-800/50">
+                <p className="text-gray-500">&copy; {new Date().getFullYear()} DevFlow.AI. The future of development.</p>
+            </footer>
+        </div>
+
+        {/* Feature Detail Modal - Placed here to avoid parallax transform issues */}
+        <FeatureModal
+            feature={selectedFeature}
+            onClose={() => setSelectedFeature(null)}
+        />
+
+        {/* Demo Presentation Modal */}
+        <DemoModal
+            isOpen={isDemoOpen}
+            onClose={() => setIsDemoOpen(false)}
+        />
+    </div>
+);
 };
 
 // --- Auth Page Component ---
@@ -253,13 +478,13 @@ const AuthPage = ({ onShowLanding }: { onShowLanding: () => void }) => {
             </div>
 
             <div className="relative z-10 w-full max-w-md">
-                 <div className="flex items-center justify-center gap-2 mb-8">
+                <div className="flex items-center justify-center gap-2 mb-8">
                     <LogoIcon className="w-10 h-10" />
                     <span className="text-2xl font-bold">DevFlow.AI</span>
                 </div>
                 <div className="bg-gray-800/80 backdrop-blur-md rounded-lg p-8 border border-gray-700/50 shadow-2xl">
                     <h2 className="text-3xl font-bold text-center mb-6">{isLogin ? 'Welcome Back' : 'Create Account'}</h2>
-                    
+
                     <button
                         onClick={handleGoogleSignIn}
                         disabled={loading}
@@ -304,7 +529,7 @@ const AuthPage = ({ onShowLanding }: { onShowLanding: () => void }) => {
                         </button>
                     </p>
                 </div>
-                 <button onClick={onShowLanding} className="text-sm text-gray-500 hover:text-gray-300 mt-6">&larr; Back to Home</button>
+                <button onClick={onShowLanding} className="text-sm text-gray-500 hover:text-gray-300 mt-6">&larr; Back to Home</button>
             </div>
         </div>
     );
@@ -353,7 +578,7 @@ const MainApp = ({ user }: { user: User }) => {
     const handleCreateProject = async (name: string, description: string) => {
         if (!user) return;
         const projectsCollectionRef = collection(db, 'users', user.uid, 'projects');
-        
+
         const newProjectData = {
             name,
             description,
@@ -370,7 +595,7 @@ const MainApp = ({ user }: { user: User }) => {
             console.error("Error creating project:", error);
         }
     };
-    
+
     const handleLogout = () => {
         signOut(auth).catch(error => console.error("Logout failed", error));
     };
@@ -419,7 +644,7 @@ const ProjectSelection = ({ projects, onSelectProject, onCreateProject, onLogout
     return (
         <div className="h-screen bg-gray-900 text-white flex flex-col items-center justify-center p-8">
             <div className="absolute top-4 right-4">
-                 <button onClick={onLogout} className="flex items-center gap-2 bg-gray-700 text-sm py-2 px-3 rounded-lg hover:bg-gray-600">Logout</button>
+                <button onClick={onLogout} className="flex items-center gap-2 bg-gray-700 text-sm py-2 px-3 rounded-lg hover:bg-gray-600">Logout</button>
             </div>
             <h1 className="text-4xl font-bold mb-8">Your Projects</h1>
             <div className="w-full max-w-2xl bg-gray-800 rounded-lg p-6">
@@ -461,7 +686,7 @@ const ProjectDashboard = ({ project, onGoBack, onUpdateProject, user, onLogout }
     const [activeView, setActiveView] = useState<View>('decomposer');
     const [isMobile, setIsMobile] = useState(false);
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-    
+
     // View state store to persist state across view switches
     // This ensures that when users switch between tools, their progress is maintained
     const [viewStates, setViewStates] = useState<{
@@ -475,7 +700,7 @@ const ProjectDashboard = ({ project, onGoBack, onUpdateProject, user, onLogout }
         simulation?: { goal: string; simulationTurns: SimulationTurn[]; finalFileSet: GeneratedCode[]; isLoading: boolean; error: string; isComplete: boolean };
         architecture?: { mermaidCode: string; isLoading: boolean; error: string; key: number };
     }>({});
-    
+
     const updateProjectState = useCallback((updates: Partial<Project>) => {
         onUpdateProject({ ...project, ...updates });
     }, [project, onUpdateProject]);
@@ -510,9 +735,8 @@ const ProjectDashboard = ({ project, onGoBack, onUpdateProject, user, onLogout }
         setIsSidebarOpen(prev => !prev);
     };
 
-    const sidebarClassNames = `fixed inset-y-0 left-0 z-40 w-64 transform transition-transform duration-300 ease-in-out ${
-        isSidebarOpen || !isMobile ? 'translate-x-0' : '-translate-x-full'
-    } lg:static lg:translate-x-0 lg:flex-shrink-0`;
+    const sidebarClassNames = `fixed inset-y-0 left-0 z-40 w-64 transform transition-transform duration-300 ease-in-out ${isSidebarOpen || !isMobile ? 'translate-x-0' : '-translate-x-full'
+        } lg:static lg:translate-x-0 lg:flex-shrink-0`;
 
     const renderView = () => {
         switch (activeView) {
@@ -525,9 +749,9 @@ const ProjectDashboard = ({ project, onGoBack, onUpdateProject, user, onLogout }
             case 'scaffolder':
                 return <ProjectScaffolderView project={project} onUpdateProject={updateProjectState} onSwitchView={setActiveView} />;
             case 'reviewer':
-                return <EnhancedToolView 
+                return <EnhancedToolView
                     key="reviewer"
-                    title="Code Reviewer" 
+                    title="Code Reviewer"
                     description="Review your code for bugs, improvements, and best practices"
                     serviceFn={geminiService.reviewCode}
                     project={project}
@@ -535,20 +759,20 @@ const ProjectDashboard = ({ project, onGoBack, onUpdateProject, user, onLogout }
                     onStateChange={(updates) => updateViewState('reviewer', updates)}
                 />;
             case 'tester':
-                return <EnhancedToolView 
+                return <EnhancedToolView
                     key="tester"
-                    title="Test Generator" 
+                    title="Test Generator"
                     description="Generate comprehensive unit tests for your code"
-                    serviceFn={geminiService.generateUnitTests} 
+                    serviceFn={geminiService.generateUnitTests}
                     outputType="code"
                     project={project}
                     state={viewStates.tester}
                     onStateChange={(updates) => updateViewState('tester', updates)}
                 />;
             case 'docs':
-                 return <EnhancedToolView 
+                return <EnhancedToolView
                     key="docs"
-                    title="Documentation Generator" 
+                    title="Documentation Generator"
                     description="Generate detailed documentation from your code"
                     serviceFn={geminiService.generateDocumentation}
                     project={project}
@@ -556,9 +780,9 @@ const ProjectDashboard = ({ project, onGoBack, onUpdateProject, user, onLogout }
                     onStateChange={(updates) => updateViewState('docs', updates)}
                 />;
             case 'complexity':
-                return <EnhancedToolView 
+                return <EnhancedToolView
                     key="complexity"
-                    title="Complexity Analysis" 
+                    title="Complexity Analysis"
                     description="Analyze code complexity and identify optimization opportunities"
                     serviceFn={geminiService.analyzeComplexity}
                     project={project}
@@ -566,18 +790,18 @@ const ProjectDashboard = ({ project, onGoBack, onUpdateProject, user, onLogout }
                     onStateChange={(updates) => updateViewState('complexity', updates)}
                 />;
             case 'summarizer':
-                 return <CommitSummarizerView 
+                return <CommitSummarizerView
                     project={project}
                     state={viewStates.summarizer}
                     onStateChange={(updates) => updateViewState('summarizer', updates)}
                 />;
             case 'run_review':
-                return <RunReviewView 
+                return <RunReviewView
                     state={viewStates.run_review}
                     onStateChange={(updates) => updateViewState('run_review', updates)}
                 />;
             case 'architecture':
-                return <ArchitectureView 
+                return <ArchitectureView
                     project={project}
                     state={viewStates.architecture}
                     onStateChange={(updates) => updateViewState('architecture', updates)}
@@ -585,14 +809,14 @@ const ProjectDashboard = ({ project, onGoBack, onUpdateProject, user, onLogout }
             case 'chat':
                 return <ChatView project={project} updateProjectState={updateProjectState} />;
             case 'memory':
-                return <MemoryAgentView 
+                return <MemoryAgentView
                     state={viewStates.memory}
                     onStateChange={(updates) => updateViewState('memory', updates)}
                 />;
             case 'simulation':
-                return <AgentSimulationView 
-                    project={project} 
-                    onUpdateProject={updateProjectState} 
+                return <AgentSimulationView
+                    project={project}
+                    onUpdateProject={updateProjectState}
                     onSwitchView={setActiveView}
                     state={viewStates.simulation}
                     onStateChange={(updates) => updateViewState('simulation', updates)}
@@ -610,9 +834,8 @@ const ProjectDashboard = ({ project, onGoBack, onUpdateProject, user, onLogout }
         <div className="relative flex h-screen bg-gray-900 text-white font-sans safe-area-inset">
             {isMobile && (
                 <div
-                    className={`fixed inset-0 bg-black/60 transition-opacity duration-300 z-30 safe-area-inset ${
-                        isSidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
-                    }`}
+                    className={`fixed inset-0 bg-black/60 transition-opacity duration-300 z-30 safe-area-inset ${isSidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                        }`}
                     onClick={() => setIsSidebarOpen(false)}
                     aria-hidden="true"
                 />
@@ -767,23 +990,23 @@ const TaskDecomposerView = ({ project, onTasksGenerated, onSwitchView }: { proje
     return (
         <div className="max-w-6xl mx-auto">
             <div className="mb-8">
-            <h2 className="text-2xl font-bold mb-4">Decompose Project into Tasks</h2>
-            <p className="text-gray-400 mb-6">Based on your project description, DevFlow.AI can generate a list of development tasks to get you started.</p>
-            <textarea
-                className="w-full h-32 p-3 bg-gray-800 border border-gray-700 rounded-lg mb-4"
-                value={idea}
-                onChange={(e) => setIdea(e.target.value)}
-                placeholder="Enter your project idea or description here..."
-            />
-            <button
-                onClick={handleDecompose}
-                disabled={isLoading}
-                className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white font-semibold py-3 px-4 rounded-lg hover:bg-blue-500 disabled:bg-blue-800 disabled:cursor-not-allowed transition-colors"
-            >
-                {isLoading ? 'Generating...' : 'Generate Tasks'}
-                <LogoIcon className="w-5 h-5 button-logo-icon" />
-            </button>
-            {error && <p className="text-red-400 mt-4 text-center">{error}</p>}
+                <h2 className="text-2xl font-bold mb-4">Decompose Project into Tasks</h2>
+                <p className="text-gray-400 mb-6">Based on your project description, DevFlow.AI can generate a list of development tasks to get you started.</p>
+                <textarea
+                    className="w-full h-32 p-3 bg-gray-800 border border-gray-700 rounded-lg mb-4"
+                    value={idea}
+                    onChange={(e) => setIdea(e.target.value)}
+                    placeholder="Enter your project idea or description here..."
+                />
+                <button
+                    onClick={handleDecompose}
+                    disabled={isLoading}
+                    className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white font-semibold py-3 px-4 rounded-lg hover:bg-blue-500 disabled:bg-blue-800 disabled:cursor-not-allowed transition-colors"
+                >
+                    {isLoading ? 'Generating...' : 'Generate Tasks'}
+                    <LogoIcon className="w-5 h-5 button-logo-icon" />
+                </button>
+                {error && <p className="text-red-400 mt-4 text-center">{error}</p>}
             </div>
 
             {/* Recommended Tool */}
@@ -894,7 +1117,7 @@ const TasksView = ({ project, onUpdateProject }: { project: Project, onUpdatePro
             const content = await geminiService.generateBoilerplate(selectedTask.description, fileName);
             const newGeneratedFile = { taskId: selectedTask.id, fileName, content };
             setGeneratedFile(newGeneratedFile);
-            
+
             const existingFileIndex = project.generatedCode.findIndex(f => f.fileName === fileName);
             let updatedCode: GeneratedCode[];
             if (existingFileIndex > -1) {
@@ -936,7 +1159,7 @@ const TasksView = ({ project, onUpdateProject }: { project: Project, onUpdatePro
         e.preventDefault();
         setDragOverStatus(status);
     };
-    
+
     const handleDeleteTask = (taskIdToDelete: string) => {
         const updatedTasks = project.tasks.filter(task => task.id !== taskIdToDelete);
         onUpdateProject({ tasks: updatedTasks });
@@ -944,7 +1167,7 @@ const TasksView = ({ project, onUpdateProject }: { project: Project, onUpdatePro
 
     const handleAddTask = () => {
         if (!newTaskTitle.trim()) return;
-        
+
         const newTask: Task = {
             id: `task-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             title: newTaskTitle.trim(),
@@ -952,10 +1175,10 @@ const TasksView = ({ project, onUpdateProject }: { project: Project, onUpdatePro
             files: [],
             status: 'pending'
         };
-        
+
         const updatedTasks = [...(project.tasks || []), newTask];
         onUpdateProject({ tasks: updatedTasks });
-        
+
         // Reset form
         setNewTaskTitle('');
         setNewTaskDescription('');
@@ -975,7 +1198,7 @@ const TasksView = ({ project, onUpdateProject }: { project: Project, onUpdatePro
                     <h2 className="text-2xl font-bold">No Tasks Yet</h2>
                     <p className="text-gray-400 mt-2 mb-4">Go to the 'Task Decomposer' to generate tasks, or add one manually below.</p>
                     {!showAddTaskForm ? (
-                        <button 
+                        <button
                             onClick={() => setShowAddTaskForm(true)}
                             className="flex items-center justify-center gap-2 bg-blue-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-blue-500 transition-colors mx-auto"
                         >
@@ -1034,24 +1257,24 @@ const TasksView = ({ project, onUpdateProject }: { project: Project, onUpdatePro
             </div>
         );
     }
-    
+
     if (selectedTask) {
         return (
             <div className="h-full flex flex-col gap-6">
                 <div>
-                     <button onClick={() => setSelectedTask(null)} className="mb-4 bg-gray-700 px-4 py-2 rounded-lg hover:bg-gray-600">&larr; Back to Board</button>
+                    <button onClick={() => setSelectedTask(null)} className="mb-4 bg-gray-700 px-4 py-2 rounded-lg hover:bg-gray-600">&larr; Back to Board</button>
                     <div className="p-4 bg-gray-800 rounded-lg border border-gray-700">
-                         <h2 className="text-xl font-bold">{selectedTask.title}</h2>
-                         <p className="text-gray-400 mt-2">{selectedTask.description}</p>
+                        <h2 className="text-xl font-bold">{selectedTask.title}</h2>
+                        <p className="text-gray-400 mt-2">{selectedTask.description}</p>
                     </div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 flex-grow min-h-0">
-                     <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
+                    <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
                         <h3 className="font-semibold mb-3">Files for this task</h3>
                         <div className="flex flex-wrap gap-2">
                             {selectedTask.files.map(file => (
                                 <button key={file} onClick={() => handleFileSelect(file)}
-                                        className={`flex items-center gap-2 text-sm px-3 py-1 rounded-md transition-colors ${selectedFile === file ? 'bg-blue-500' : 'bg-gray-700 hover:bg-gray-600'}`}>
+                                    className={`flex items-center gap-2 text-sm px-3 py-1 rounded-md transition-colors ${selectedFile === file ? 'bg-blue-500' : 'bg-gray-700 hover:bg-gray-600'}`}>
                                     <FileIcon className="w-4 h-4" />
                                     {file}
                                 </button>
@@ -1059,8 +1282,8 @@ const TasksView = ({ project, onUpdateProject }: { project: Project, onUpdatePro
                         </div>
                     </div>
                     <div className="h-full">
-                       <CodePreview file={generatedFile} isLoading={isLoadingCode} />
-                       {codeError && <p className="text-red-400 mt-2">{codeError}</p>}
+                        <CodePreview file={generatedFile} isLoading={isLoadingCode} />
+                        {codeError && <p className="text-red-400 mt-2">{codeError}</p>}
                     </div>
                 </div>
             </div>
@@ -1073,7 +1296,7 @@ const TasksView = ({ project, onUpdateProject }: { project: Project, onUpdatePro
             <div className="flex justify-between items-center">
                 <h2 className="text-2xl font-bold">Tasks</h2>
                 {!showAddTaskForm ? (
-                    <button 
+                    <button
                         onClick={() => setShowAddTaskForm(true)}
                         className="flex items-center justify-center gap-2 bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-500 transition-colors"
                     >
@@ -1136,35 +1359,35 @@ const TasksView = ({ project, onUpdateProject }: { project: Project, onUpdatePro
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 flex-grow min-h-0">
                 {columns.map(({ status, title }) => (
                     <div key={status}
-                         onDrop={(e) => handleDrop(e, status)}
-                         onDragOver={(e) => handleDragOver(e, status)}
-                         onDragLeave={() => setDragOverStatus(null)}
-                         className={`bg-gray-800 rounded-lg p-4 flex flex-col border border-gray-700 transition-colors ${dragOverStatus === status ? 'bg-gray-700' : ''}`}>
+                        onDrop={(e) => handleDrop(e, status)}
+                        onDragOver={(e) => handleDragOver(e, status)}
+                        onDragLeave={() => setDragOverStatus(null)}
+                        className={`bg-gray-800 rounded-lg p-4 flex flex-col border border-gray-700 transition-colors ${dragOverStatus === status ? 'bg-gray-700' : ''}`}>
                         <h2 className="text-lg font-bold mb-4 px-2">{title} <span className="text-sm font-normal text-gray-400">{project.tasks.filter(t => t.status === status).length}</span></h2>
                         <div className="space-y-3 overflow-y-auto flex-grow pr-1">
-                        {project.tasks.filter(t => t.status === status).map(task => (
-                            <div key={task.id}
-                                 draggable
-                                 onDragStart={(e) => handleDragStart(e, task.id)}
-                                 className={`p-3 rounded-lg bg-gray-700 hover:bg-gray-600 border border-transparent group relative transition-all ${draggedTaskId === task.id ? 'opacity-50' : 'opacity-100'}`}>
-                                
-                                <div onClick={() => setSelectedTask(task)} className="cursor-pointer">
-                                    <h3 className="font-semibold pr-6">{task.title}</h3>
-                                    <p className="text-sm text-gray-400 line-clamp-2 mt-1">{task.description}</p>
-                                </div>
+                            {project.tasks.filter(t => t.status === status).map(task => (
+                                <div key={task.id}
+                                    draggable
+                                    onDragStart={(e) => handleDragStart(e, task.id)}
+                                    className={`p-3 rounded-lg bg-gray-700 hover:bg-gray-600 border border-transparent group relative transition-all ${draggedTaskId === task.id ? 'opacity-50' : 'opacity-100'}`}>
 
-                                <button 
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleDeleteTask(task.id);
-                                    }}
-                                    className="absolute top-2 right-2 p-1 rounded-full text-gray-500 hover:bg-gray-800 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
-                                    aria-label="Delete task"
-                                >
-                                    <TrashIcon className="w-4 h-4" />
-                                </button>
-                            </div>
-                        ))}
+                                    <div onClick={() => setSelectedTask(task)} className="cursor-pointer">
+                                        <h3 className="font-semibold pr-6">{task.title}</h3>
+                                        <p className="text-sm text-gray-400 line-clamp-2 mt-1">{task.description}</p>
+                                    </div>
+
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDeleteTask(task.id);
+                                        }}
+                                        className="absolute top-2 right-2 p-1 rounded-full text-gray-500 hover:bg-gray-800 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                                        aria-label="Delete task"
+                                    >
+                                        <TrashIcon className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 ))}
@@ -1174,19 +1397,19 @@ const TasksView = ({ project, onUpdateProject }: { project: Project, onUpdatePro
 };
 
 // Enhanced tool view with file selection from project
-const EnhancedToolView = ({ title, description, serviceFn, outputType = 'markdown', project, state, onStateChange }: { 
-    title: string, 
+const EnhancedToolView = ({ title, description, serviceFn, outputType = 'markdown', project, state, onStateChange }: {
+    title: string,
     description: string,
-    serviceFn: (input: string) => Promise<string>, 
-    outputType?: 'markdown' | 'code', 
+    serviceFn: (input: string) => Promise<string>,
+    outputType?: 'markdown' | 'code',
     project: Project,
-    state?: { input: string; output: string; isLoading: boolean; error: string; selectedFile?: string | null; inputMode?: 'file' | 'manual' }, 
-    onStateChange?: (updates: Partial<{ input: string; output: string; isLoading: boolean; error: string; selectedFile?: string | null; inputMode?: 'file' | 'manual' }>) => void 
+    state?: { input: string; output: string; isLoading: boolean; error: string; selectedFile?: string | null; inputMode?: 'file' | 'manual' },
+    onStateChange?: (updates: Partial<{ input: string; output: string; isLoading: boolean; error: string; selectedFile?: string | null; inputMode?: 'file' | 'manual' }>) => void
 }) => {
     // Initialize state from persisted state, ensuring each tool has its own isolated state
     // Track the previous state object to detect tool switches
     const prevStateRef = useRef(state);
-    
+
     const [input, setInput] = useState(() => state?.input || '');
     const [output, setOutput] = useState(() => state?.output || '');
     const [isLoading, setIsLoading] = useState(() => state?.isLoading || false);
@@ -1198,7 +1421,7 @@ const EnhancedToolView = ({ title, description, serviceFn, outputType = 'markdow
     useEffect(() => {
         // Check if we've switched to a different tool (state object reference changed)
         const isToolSwitch = prevStateRef.current !== state;
-        
+
         if (isToolSwitch && state) {
             // Tool switch detected - load the new tool's state
             setInput(state.input || '');
@@ -1308,11 +1531,10 @@ const EnhancedToolView = ({ title, description, serviceFn, outputType = 'markdow
                                         <button
                                             key={file.fileName}
                                             onClick={() => handleFileSelect(file.fileName)}
-                                            className={`w-full text-left px-3 py-2 rounded text-sm transition-colors flex items-center gap-2 ${
-                                                selectedFile === file.fileName
-                                                    ? 'bg-blue-600 text-white'
-                                                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                                            }`}
+                                            className={`w-full text-left px-3 py-2 rounded text-sm transition-colors flex items-center gap-2 ${selectedFile === file.fileName
+                                                ? 'bg-blue-600 text-white'
+                                                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                                                }`}
                                         >
                                             <FileIcon className="w-4 h-4 flex-shrink-0" />
                                             <span className="truncate">{file.fileName}</span>
@@ -1324,7 +1546,7 @@ const EnhancedToolView = ({ title, description, serviceFn, outputType = 'markdow
                             )}
                         </div>
                     )}
-                    
+
                     {/* Input Area */}
                     <div className="flex-grow flex flex-col min-h-0">
                         <div className="flex items-center justify-between mb-2">
@@ -1352,7 +1574,7 @@ const EnhancedToolView = ({ title, description, serviceFn, outputType = 'markdow
                             readOnly={inputMode === 'file' && selectedFile !== null}
                         />
                     </div>
-                    
+
                     <button
                         onClick={handleSubmit}
                         disabled={isLoading || !input.trim()}
@@ -1361,7 +1583,7 @@ const EnhancedToolView = ({ title, description, serviceFn, outputType = 'markdow
                         {isLoading ? 'Processing...' : 'Analyze Code'} <LogoIcon className="w-5 h-5 button-logo-icon" />
                     </button>
                 </div>
-                
+
                 {/* Output Area */}
                 <div className="bg-gray-800 rounded-lg p-4 border border-gray-700 overflow-y-auto flex flex-col">
                     <h3 className="text-sm font-semibold text-gray-300 mb-3">Result</h3>
@@ -1493,8 +1715,8 @@ const SimpleToolView = ({ title, placeholder, serviceFn, outputType = 'markdown'
                     {error && <p className="text-red-400">{error}</p>}
                     {output && (
                         outputType === 'code' ?
-                        <pre className="text-sm whitespace-pre-wrap"><code>{output}</code></pre> :
-                        <div className="prose prose-invert max-w-none"><ReactMarkdown>{output}</ReactMarkdown></div>
+                            <pre className="text-sm whitespace-pre-wrap"><code>{output}</code></pre> :
+                            <div className="prose prose-invert max-w-none"><ReactMarkdown>{output}</ReactMarkdown></div>
                     )}
                 </div>
             </div>
@@ -1503,10 +1725,10 @@ const SimpleToolView = ({ title, placeholder, serviceFn, outputType = 'markdown'
 };
 
 // Commit Summarizer View with automatic git diff detection
-const CommitSummarizerView = ({ project, state, onStateChange }: { 
+const CommitSummarizerView = ({ project, state, onStateChange }: {
     project: Project,
-    state?: { input: string; output: string; isLoading: boolean; error: string }, 
-    onStateChange?: (updates: Partial<{ input: string; output: string; isLoading: boolean; error: string }>) => void 
+    state?: { input: string; output: string; isLoading: boolean; error: string },
+    onStateChange?: (updates: Partial<{ input: string; output: string; isLoading: boolean; error: string }>) => void
 }) => {
     const [input, setInput] = useState(state?.input || '');
     const [output, setOutput] = useState(state?.output || '');
@@ -1524,10 +1746,10 @@ const CommitSummarizerView = ({ project, state, onStateChange }: {
     const detectChanges = async () => {
         setIsDetectingChanges(true);
         setError('');
-        
+
         try {
             const projectFiles = project.generatedCode || [];
-            
+
             if (projectFiles.length === 0) {
                 setError('No project files found. Please ensure your project has files to compare.');
                 setIsDetectingChanges(false);
@@ -1536,11 +1758,11 @@ const CommitSummarizerView = ({ project, state, onStateChange }: {
 
             // Create a simple diff format from all files
             let diffContent = '';
-            
+
             // Group files by directory for better organization
             const filesByDir = new Map<string, typeof projectFiles>();
             projectFiles.forEach(file => {
-                const dir = file.fileName.includes('/') 
+                const dir = file.fileName.includes('/')
                     ? file.fileName.substring(0, file.fileName.lastIndexOf('/'))
                     : '/';
                 if (!filesByDir.has(dir)) {
@@ -1649,7 +1871,7 @@ const CommitSummarizerView = ({ project, state, onStateChange }: {
                             placeholder="Git diff will appear here after clicking 'Detect Changes', or paste your git diff manually..."
                         />
                     </div>
-                    
+
                     <button
                         onClick={handleSubmit}
                         disabled={isLoading || !input.trim()}
@@ -1658,7 +1880,7 @@ const CommitSummarizerView = ({ project, state, onStateChange }: {
                         {isLoading ? 'Generating Summary...' : 'Generate Commit Message'} <LogoIcon className="w-5 h-5 button-logo-icon" />
                     </button>
                 </div>
-                
+
                 {/* Output Area */}
                 <div className="bg-gray-800 rounded-lg p-4 border border-gray-700 overflow-y-auto flex flex-col">
                     <h3 className="text-sm font-semibold text-gray-300 mb-3">Commit Message</h3>
@@ -1764,16 +1986,16 @@ const RunReviewView = ({ state, onStateChange }: { state?: { code: string; langu
     };
 
     return (
-         <div className="flex flex-col h-full gap-4">
+        <div className="flex flex-col h-full gap-4">
             <h2 className="text-2xl font-bold">Run & Review Code</h2>
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-grow">
-                 <div className="flex flex-col gap-4">
-                     <select value={language} onChange={e => handleLanguageChange(e.target.value)} className="bg-gray-800 border border-gray-700 p-2 rounded-lg">
-                         <option value="javascript">JavaScript</option>
-                         <option value="python">Python</option>
-                         <option value="typescript">TypeScript</option>
-                         <option value="go">Go</option>
-                     </select>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-grow">
+                <div className="flex flex-col gap-4">
+                    <select value={language} onChange={e => handleLanguageChange(e.target.value)} className="bg-gray-800 border border-gray-700 p-2 rounded-lg">
+                        <option value="javascript">JavaScript</option>
+                        <option value="python">Python</option>
+                        <option value="typescript">TypeScript</option>
+                        <option value="go">Go</option>
+                    </select>
                     <textarea
                         className="w-full h-full p-3 bg-gray-800 border border-gray-700 rounded-lg flex-grow"
                         value={code}
@@ -1898,7 +2120,7 @@ const ArchitectureView = ({ project, state, onStateChange }: { project: Project,
         const allCode = project.generatedCode
             .map(file => `// File: ${file.fileName}\n\n${file.content}`)
             .join('\n\n---\n\n');
-        
+
         const description = `Project Name: "${project.name}"\nProject Description: "${project.description}"\n\nHere is all the generated code for the project. Analyze it and create a system architecture diagram.\n\n${allCode}`;
 
         try {
@@ -1964,9 +2186,9 @@ const ArchitectureView = ({ project, state, onStateChange }: { project: Project,
                     </div>
                 )}
                 {!isLoading && !mermaidCode && !error && (
-                     <div className="text-center text-gray-500">
-                         <p>Click the button to generate your project's architecture diagram.</p>
-                     </div>
+                    <div className="text-center text-gray-500">
+                        <p>Click the button to generate your project's architecture diagram.</p>
+                    </div>
                 )}
             </div>
         </div>
@@ -2116,18 +2338,18 @@ const EditorView = ({ project, onUpdateProject }: { project: Project, onUpdatePr
     const [dirtyFiles, setDirtyFiles] = useState<Set<string>>(new Set());
     const [isOutOfSync, setIsOutOfSync] = useState(false);
     const baseProjectCodeRef = useRef(project.generatedCode || []);
-    
+
     const [isDownloading, setIsDownloading] = useState(false);
     const [activeTab, setActiveTab] = useState<'editor' | 'preview'>('editor');
     const [deployment, setDeployment] = useState<{ mainUrl: string; assetUrls: string[] } | null>(null);
     const [isDeploying, setIsDeploying] = useState(false);
     const [deployError, setDeployError] = useState('');
     const iframeRef = useRef<HTMLIFrameElement | null>(null);
-    
+
     // Handle navigation messages from iframe
     useEffect(() => {
         if (!deployment) return;
-        
+
         const handleMessage = (event: MessageEvent) => {
             if (event.data && event.data.type === 'NAVIGATE') {
                 const targetUrl = event.data.url;
@@ -2137,7 +2359,7 @@ const EditorView = ({ project, onUpdateProject }: { project: Project, onUpdatePr
                 }
             }
         };
-        
+
         window.addEventListener('message', handleMessage);
         return () => {
             window.removeEventListener('message', handleMessage);
@@ -2146,15 +2368,15 @@ const EditorView = ({ project, onUpdateProject }: { project: Project, onUpdatePr
 
     const hasUnsavedChanges = useMemo(() => {
         if (dirtyFiles.size > 0) return true;
-    
+
         const baseFiles = baseProjectCodeRef.current;
         if (editableFiles.length !== baseFiles.length) return true;
-    
+
         const baseFileNames = new Set(baseFiles.map(f => f.fileName));
         for (const file of editableFiles) {
             if (!baseFileNames.has(file.fileName)) return true;
         }
-    
+
         return false;
     }, [editableFiles, dirtyFiles]);
 
@@ -2187,9 +2409,9 @@ const EditorView = ({ project, onUpdateProject }: { project: Project, onUpdatePr
             const readme = sortedFiles.find(f => f.fileName.toLowerCase() === 'readme.md');
             setSelectedFileName(readme ? readme.fileName : (sortedFiles.length > 0 ? sortedFiles[0].fileName : null));
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
-    
+
     // Cleanup deployment URLs on unmount - No longer needed for VFS
     useEffect(() => {
         return () => {
@@ -2202,12 +2424,12 @@ const EditorView = ({ project, onUpdateProject }: { project: Project, onUpdatePr
     const isAutoDeployingRef = useRef(false);
     const previousTabRef = useRef<'editor' | 'preview'>('editor');
     const currentFilesHashRef = useRef<string>('');
-    
+
     // Update the current files hash whenever editableFiles changes
     useEffect(() => {
         currentFilesHashRef.current = JSON.stringify(editableFiles.map(f => ({ fileName: f.fileName, content: f.content })));
     }, [editableFiles]);
-    
+
     const fileTree = useMemo(() => buildFileTree(editableFiles), [editableFiles]);
 
     const handleCodeChange = (newCode: string) => {
@@ -2226,7 +2448,7 @@ const EditorView = ({ project, onUpdateProject }: { project: Project, onUpdatePr
         baseProjectCodeRef.current = editableFiles;
         setIsOutOfSync(false);
     };
-    
+
     const handleForceSync = () => {
         if (window.confirm("You have unsaved changes that will be lost. Are you sure you want to discard them and load the latest project files?")) {
             const externalCode = project.generatedCode || [];
@@ -2260,7 +2482,7 @@ const EditorView = ({ project, onUpdateProject }: { project: Project, onUpdatePr
                 const sortedFiles = [...newFiles].sort((a, b) => a.fileName.localeCompare(b.fileName));
                 setSelectedFileName(sortedFiles.length > 0 ? sortedFiles[0].fileName : null);
             }
-            
+
             setDirtyFiles(currentDirty => {
                 const newDirty = new Set(currentDirty);
                 newDirty.delete(path);
@@ -2282,7 +2504,7 @@ const EditorView = ({ project, onUpdateProject }: { project: Project, onUpdatePr
             default: return 'clike';
         }
     };
-    
+
     const highlightCode = (code: string) => {
         const lang = getLanguage(selectedFileName || '');
         if (Prism.languages[lang]) {
@@ -2310,9 +2532,9 @@ const EditorView = ({ project, onUpdateProject }: { project: Project, onUpdatePr
     // Deployment function - always uses latest editableFiles to ensure preview shows current code
     // Deployment function - Uses Service Worker VFS
     const handleDeployProject = useCallback(async () => {
-        setIsDeploying(true); 
+        setIsDeploying(true);
         setDeployError('');
-        
+
         try {
             if (!navigator.serviceWorker || !navigator.serviceWorker.controller) {
                 // Try to register if not active
@@ -2320,8 +2542,8 @@ const EditorView = ({ project, onUpdateProject }: { project: Project, onUpdatePr
                     await navigator.serviceWorker.register('/service-worker.js');
                     await navigator.serviceWorker.ready;
                     if (!navigator.serviceWorker.controller) {
-                         window.location.reload(); // Force reload to activate SW
-                         return;
+                        window.location.reload(); // Force reload to activate SW
+                        return;
                     }
                 } else {
                     throw new Error("Service Worker not supported in this browser.");
@@ -2330,37 +2552,37 @@ const EditorView = ({ project, onUpdateProject }: { project: Project, onUpdatePr
 
             // Prepare files
             const filesToSend = editableFiles.map(f => ({ ...f }));
-            
+
             // Process HTML files to inject Babel and Error Handler
             const htmlFiles = filesToSend.filter(f => f.fileName.toLowerCase().endsWith('.html'));
             const needsBabel = filesToSend.some(f => /\.(jsx|tsx)$/.test(f.fileName));
-            
+
             for (const htmlFile of htmlFiles) {
                 const doc = new DOMParser().parseFromString(htmlFile.content, 'text/html');
-                
+
                 // Inject Error Handler
                 const errorHandlerScript = doc.createElement('script');
                 errorHandlerScript.textContent = `
                     window.addEventListener('error', e => console.error('Preview Error:', e.message));
                 `;
                 doc.head.appendChild(errorHandlerScript);
-                
+
                 // Inject Babel if needed
                 if (needsBabel) {
-                     const babelScript = doc.createElement('script'); 
-                     babelScript.src = "https://unpkg.com/@babel/standalone/babel.min.js"; 
-                     doc.head.appendChild(babelScript);
-                     
-                     // Transform scripts to text/babel
-                     doc.querySelectorAll('script[src]').forEach(s => {
-                         const src = s.getAttribute('src');
-                         if (src && /\.(jsx|tsx)$/.test(src)) {
-                             s.setAttribute('type', 'text/babel');
-                             s.setAttribute('data-type', 'module');
-                         }
-                     });
+                    const babelScript = doc.createElement('script');
+                    babelScript.src = "https://unpkg.com/@babel/standalone/babel.min.js";
+                    doc.head.appendChild(babelScript);
+
+                    // Transform scripts to text/babel
+                    doc.querySelectorAll('script[src]').forEach(s => {
+                        const src = s.getAttribute('src');
+                        if (src && /\.(jsx|tsx)$/.test(src)) {
+                            s.setAttribute('type', 'text/babel');
+                            s.setAttribute('data-type', 'module');
+                        }
+                    });
                 }
-                
+
                 htmlFile.content = new XMLSerializer().serializeToString(doc);
             }
 
@@ -2368,11 +2590,11 @@ const EditorView = ({ project, onUpdateProject }: { project: Project, onUpdatePr
             const messageChannel = new MessageChannel();
             messageChannel.port1.onmessage = (event) => {
                 if (event.data.type === 'FILES_UPDATED') {
-                    setDeployment({ 
-                        mainUrl: '/_preview/index.html', 
-                        assetUrls: [] 
+                    setDeployment({
+                        mainUrl: '/_preview/index.html',
+                        assetUrls: []
                     });
-                    
+
                     if (activeTab !== 'preview') {
                         setActiveTab('preview');
                     }
@@ -2384,9 +2606,9 @@ const EditorView = ({ project, onUpdateProject }: { project: Project, onUpdatePr
                 type: 'UPDATE_FILES',
                 files: filesToSend
             }, [messageChannel.port2]);
-            
-        } catch (e: any) { 
-            setDeployError(e.message); 
+
+        } catch (e: any) {
+            setDeployError(e.message);
             setIsDeploying(false);
         }
     }, [editableFiles, activeTab]);
@@ -2397,11 +2619,11 @@ const EditorView = ({ project, onUpdateProject }: { project: Project, onUpdatePr
         // Only trigger when actually switching TO preview (not when already on preview)
         const isSwitchingToPreview = activeTab === 'preview' && previousTabRef.current !== 'preview';
         previousTabRef.current = activeTab;
-        
+
         if (isSwitchingToPreview && !isAutoDeployingRef.current && !isDeploying) {
             // Get the current files hash from ref (always up to date)
             const currentFilesHash = currentFilesHashRef.current;
-            
+
             // If there's no deployment or files have changed, deploy automatically
             if (!deployment || currentFilesHash !== lastDeployedFilesRef.current) {
                 if (editableFiles.length > 0) {
@@ -2420,25 +2642,25 @@ const EditorView = ({ project, onUpdateProject }: { project: Project, onUpdatePr
     if (project.generatedCode.length === 0 && editableFiles.length === 0) {
         return <div className="text-center p-8 bg-gray-800 rounded-lg"><h2 className="text-2xl font-bold">Editor is Empty</h2><p className="text-gray-400 mt-2">Use 'Project Scaffolder' or 'Tasks' to generate files.</p></div>;
     }
-    
+
     // Get the content of the selected file for editing
     const selectedFileContent = editableFiles.find(f => f.fileName === selectedFileName)?.content ?? '';
 
     return (
         <div className="flex flex-col h-full" style={{ minHeight: 0 }}>
-             <div className="flex justify-between items-center shrink-0 mb-4">
+            <div className="flex justify-between items-center shrink-0 mb-4">
                 <h2 className="text-2xl font-bold">Project Editor</h2>
                 <div className="flex items-center gap-2">
-                    <button onClick={handleSaveChanges} disabled={!hasUnsavedChanges} className="flex items-center justify-center gap-2 bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-500 disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors"><LogoIcon className="w-5 h-5 button-logo-icon"/> Save Changes</button>
-                    <button onClick={handleDownloadProject} disabled={isDownloading} className="flex items-center justify-center gap-2 bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-gray-500 disabled:bg-gray-700 disabled:cursor-not-allowed transition-colors"><LogoIcon className="w-5 h-5 button-logo-icon"/>{isDownloading ? 'Zipping...' : 'Download'}</button>
-                    <button onClick={handleDeployProject} disabled={isDeploying} className="flex items-center justify-center gap-2 bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-gray-500 disabled:bg-gray-700 disabled:cursor-not-allowed transition-colors"><LogoIcon className="w-5 h-5 button-logo-icon"/>{isDeploying ? 'Deploying...' : 'Deploy'}</button>
+                    <button onClick={handleSaveChanges} disabled={!hasUnsavedChanges} className="flex items-center justify-center gap-2 bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-500 disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors"><LogoIcon className="w-5 h-5 button-logo-icon" /> Save Changes</button>
+                    <button onClick={handleDownloadProject} disabled={isDownloading} className="flex items-center justify-center gap-2 bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-gray-500 disabled:bg-gray-700 disabled:cursor-not-allowed transition-colors"><LogoIcon className="w-5 h-5 button-logo-icon" />{isDownloading ? 'Zipping...' : 'Download'}</button>
+                    <button onClick={handleDeployProject} disabled={isDeploying} className="flex items-center justify-center gap-2 bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-gray-500 disabled:bg-gray-700 disabled:cursor-not-allowed transition-colors"><LogoIcon className="w-5 h-5 button-logo-icon" />{isDeploying ? 'Deploying...' : 'Deploy'}</button>
                     {deployment && (
-                        <button 
-                            onClick={() => window.open(deployment.mainUrl, '_blank', 'noopener,noreferrer')} 
+                        <button
+                            onClick={() => window.open(deployment.mainUrl, '_blank', 'noopener,noreferrer')}
                             className="flex items-center justify-center gap-2 bg-green-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-500 transition-colors"
                             title="Open preview in new tab"
                         >
-                            <LogoIcon className="w-5 h-5 button-logo-icon"/> Open in New Tab
+                            <LogoIcon className="w-5 h-5 button-logo-icon" /> Open in New Tab
                         </button>
                     )}
                 </div>
@@ -2454,8 +2676,8 @@ const EditorView = ({ project, onUpdateProject }: { project: Project, onUpdatePr
             <div className="border-b border-gray-700 shrink-0 mb-4">
                 <nav className="flex space-x-2">
                     <button onClick={() => setActiveTab('editor')} className={`py-2 px-4 text-sm font-medium ${activeTab === 'editor' ? 'text-white border-b-2 border-blue-500' : 'text-gray-400 hover:text-white border-b-2 border-transparent'}`}>Editor</button>
-                    <button 
-                        onClick={() => setActiveTab('preview')} 
+                    <button
+                        onClick={() => setActiveTab('preview')}
                         className={`py-2 px-4 text-sm font-medium ${activeTab === 'preview' ? 'text-white border-b-2 border-blue-500' : 'text-gray-400 hover:text-white border-b-2 border-transparent'} ${editableFiles.length === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
                         disabled={editableFiles.length === 0}
                     >
@@ -2464,18 +2686,18 @@ const EditorView = ({ project, onUpdateProject }: { project: Project, onUpdatePr
                 </nav>
             </div>
             {deployError && <p className="text-red-400 text-sm shrink-0 -mt-2 mb-4">{deployError}</p>}
-            
+
             {activeTab === 'editor' ? (
-                 <div className="flex-1 grid grid-cols-12 gap-4" style={{ minHeight: 0, height: '100%', maxHeight: '100%' }}>
+                <div className="flex-1 grid grid-cols-12 gap-4" style={{ minHeight: 0, height: '100%', maxHeight: '100%' }}>
                     <div className="col-span-3 bg-gray-800 rounded-lg p-2 border border-gray-700 flex flex-col" style={{ minHeight: 0, height: '100%' }}>
-                        <button onClick={handleCreateFile} className="w-full flex items-center justify-center gap-2 bg-gray-700 text-sm py-2 px-3 rounded-md hover:bg-gray-600 mb-2 shrink-0"><LogoIcon className="w-4 h-4 button-logo-icon"/> New File</button>
+                        <button onClick={handleCreateFile} className="w-full flex items-center justify-center gap-2 bg-gray-700 text-sm py-2 px-3 rounded-md hover:bg-gray-600 mb-2 shrink-0"><LogoIcon className="w-4 h-4 button-logo-icon" /> New File</button>
                         <div className="overflow-y-auto flex-1 space-y-0.5 pr-1" style={{ minHeight: 0 }}>
                             {Object.entries(fileTree).sort(([aName, aNode], [bName, bNode]) => {
                                 if (aNode.isFile && !bNode.isFile) return 1;
                                 if (!aNode.isFile && bNode.isFile) return -1;
                                 return aName.localeCompare(bName);
                             }).map(([name, node]) => (
-                                <FileTreeItem key={name} name={name} node={node} onFileSelect={setSelectedFileName} selectedFile={selectedFileName} level={0} onDeleteFile={handleDeleteFile} dirtyFiles={dirtyFiles}/>
+                                <FileTreeItem key={name} name={name} node={node} onFileSelect={setSelectedFileName} selectedFile={selectedFileName} level={0} onDeleteFile={handleDeleteFile} dirtyFiles={dirtyFiles} />
                             ))}
                         </div>
                     </div>
@@ -2483,20 +2705,20 @@ const EditorView = ({ project, onUpdateProject }: { project: Project, onUpdatePr
                     <div className="col-span-9 bg-gray-900 rounded-lg border border-gray-700" style={{ height: '100%', minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
                         {selectedFileName ? (
                             <div className="editor-scroll-container" style={{ flex: 1, minHeight: 0, height: '100%', width: '100%', overflow: 'auto', position: 'relative' }}>
-                            <Editor
-                                value={selectedFileContent}
-                                onValueChange={handleCodeChange}
-                                highlight={highlightCode}
-                                padding={16}
-                                style={{
+                                <Editor
+                                    value={selectedFileContent}
+                                    onValueChange={handleCodeChange}
+                                    highlight={highlightCode}
+                                    padding={16}
+                                    style={{
                                         fontFamily: '"Fira Code", "Fira Mono", monospace',
                                         fontSize: 14,
                                         width: '100%',
                                         minHeight: '100%',
-                                    background: '#1E1E1E',
+                                        background: '#1E1E1E',
                                         outline: 'none',
-                                }}
-                            />
+                                    }}
+                                />
                             </div>
                         ) : (
                             <div className="flex items-center justify-center flex-1">Select a file to view or edit.</div>
@@ -2506,18 +2728,18 @@ const EditorView = ({ project, onUpdateProject }: { project: Project, onUpdatePr
             ) : isDeploying ? (
                 <div className="flex-grow flex items-center justify-center bg-gray-800 rounded-lg border border-gray-700">
                     <div className="text-center text-gray-500">
-                        <DeployIcon className="w-12 h-12 mx-auto mb-2 animate-pulse"/>
+                        <DeployIcon className="w-12 h-12 mx-auto mb-2 animate-pulse" />
                         <p>Deploying latest changes...</p>
                     </div>
                 </div>
             ) : deployment ? (
                 <div className="flex-grow bg-gray-800 rounded-lg border border-gray-700 p-1 relative">
-                    <iframe 
+                    <iframe
                         ref={iframeRef}
-                        key={deployment.mainUrl} 
-                        src={deployment.mainUrl} 
-                        className="w-full h-full border-0 bg-white rounded-md" 
-                        title="Deployment Preview" 
+                        key={deployment.mainUrl}
+                        src={deployment.mainUrl}
+                        className="w-full h-full border-0 bg-white rounded-md"
+                        title="Deployment Preview"
                         sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-modals allow-downloads allow-orientation-lock allow-pointer-lock allow-presentation allow-top-navigation-by-user-activation"
                         allow="accelerometer; camera; encrypted-media; geolocation; gyroscope; microphone; midi; payment; usb; vr; xr-spatial-tracking; fullscreen"
                         loading="eager"
@@ -2547,7 +2769,7 @@ const EditorView = ({ project, onUpdateProject }: { project: Project, onUpdatePr
             ) : (
                 <div className="flex-grow flex items-center justify-center bg-gray-800 rounded-lg border border-gray-700">
                     <div className="text-center text-gray-500">
-                        <DeployIcon className="w-12 h-12 mx-auto mb-2"/>
+                        <DeployIcon className="w-12 h-12 mx-auto mb-2" />
                         <p>Deploy the project to see a live preview.</p>
                     </div>
                 </div>
@@ -2643,7 +2865,7 @@ const ProjectHeatmapView = ({ project }: { project: Project }) => {
         }
     };
 
-    const filteredTasks = project.tasks.filter(task => 
+    const filteredTasks = project.tasks.filter(task =>
         filterStatus === 'all' || task.status === filterStatus
     );
 
@@ -2675,7 +2897,7 @@ const ProjectHeatmapView = ({ project }: { project: Project }) => {
                     Project Heatmap
                 </h2>
                 <p className="text-gray-400 mb-4">Visualize task complexity, status, and file associations at a glance</p>
-                
+
                 {/* Statistics Cards */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
                     <div className="bg-gradient-to-br from-blue-600/20 to-blue-800/20 backdrop-blur-sm p-3 rounded-xl border border-blue-500/30">
@@ -2705,11 +2927,10 @@ const ProjectHeatmapView = ({ project }: { project: Project }) => {
                                 <button
                                     key={status}
                                     onClick={() => setFilterStatus(status)}
-                                    className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
-                                        filterStatus === status
-                                            ? 'bg-blue-600 text-white'
-                                            : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                                    }`}
+                                    className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${filterStatus === status
+                                        ? 'bg-blue-600 text-white'
+                                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                                        }`}
                                 >
                                     {status === 'all' ? 'All' : status === 'in-progress' ? 'In Progress' : status.charAt(0).toUpperCase() + status.slice(1)}
                                 </button>
@@ -2757,7 +2978,7 @@ const ProjectHeatmapView = ({ project }: { project: Project }) => {
                             const intensity = getIntensity(task.files.length);
                             const bgColor = getHeatmapColor(intensity, task.status);
                             const isSelected = selectedTask?.id === task.id;
-                            
+
                             return (
                                 <div
                                     key={task.id}
@@ -2765,9 +2986,8 @@ const ProjectHeatmapView = ({ project }: { project: Project }) => {
                                     className="relative group cursor-pointer transform transition-all hover:scale-105"
                                 >
                                     <div
-                                        className={`aspect-square rounded-lg border-2 transition-all ${
-                                            isSelected ? 'border-white shadow-lg shadow-blue-500/50 scale-105' : 'border-transparent group-hover:border-blue-400'
-                                        }`}
+                                        className={`aspect-square rounded-lg border-2 transition-all ${isSelected ? 'border-white shadow-lg shadow-blue-500/50 scale-105' : 'border-transparent group-hover:border-blue-400'
+                                            }`}
                                         style={{
                                             background: bgColor,
                                             boxShadow: intensity > 0.5 ? `0 0 15px ${bgColor}` : 'none',
@@ -2775,7 +2995,7 @@ const ProjectHeatmapView = ({ project }: { project: Project }) => {
                                     >
                                         {/* Status indicator */}
                                         <div className={`absolute top-1 right-1 w-2 h-2 rounded-full ${getStatusColor(task.status)} shadow-sm`}></div>
-                                        
+
                                         {/* File count badge */}
                                         {task.files.length > 0 && (
                                             <div className="absolute bottom-1 left-1 bg-black/70 text-white text-xs px-1.5 py-0.5 rounded font-semibold">
@@ -2783,15 +3003,14 @@ const ProjectHeatmapView = ({ project }: { project: Project }) => {
                                             </div>
                                         )}
                                     </div>
-                                    
+
                                     {/* Enhanced Tooltip - Fixed positioning */}
-                                    <div className={`absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-56 p-2.5 bg-gray-900 text-white rounded-lg shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 border border-gray-700 ${
-                                        isSelected ? 'opacity-100' : ''
-                                    }`}
-                                    style={{ 
-                                        maxWidth: 'calc(100vw - 2rem)',
-                                        wordBreak: 'break-word'
-                                    }}>
+                                    <div className={`absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-56 p-2.5 bg-gray-900 text-white rounded-lg shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 border border-gray-700 ${isSelected ? 'opacity-100' : ''
+                                        }`}
+                                        style={{
+                                            maxWidth: 'calc(100vw - 2rem)',
+                                            wordBreak: 'break-word'
+                                        }}>
                                         <div className="flex items-start justify-between mb-1.5 gap-2">
                                             <h4 className="font-bold text-xs leading-tight">{task.title}</h4>
                                             <span className={`text-xs px-1.5 py-0.5 rounded shrink-0 ${getStatusColor(task.status)}`}>
@@ -2926,7 +3145,7 @@ const MemoryAgentView = ({ state, onStateChange }: { state?: { messages: ChatMes
             setIsLoading(false);
         }
     };
-    
+
     return (
         <div className="flex flex-col h-full">
             <h2 className="text-2xl font-bold mb-2">Memory Agent</h2>
@@ -3050,14 +3269,14 @@ const AgentSimulationView = ({ project, onUpdateProject, onSwitchView, state, on
     };
 
     return (
-         <div className="flex flex-col h-full gap-4">
+        <div className="flex flex-col h-full gap-4">
             <div>
                 <h2 className="text-2xl font-bold mb-2">Multi-Agent Simulation</h2>
                 <p className="text-gray-400">Define a goal and watch a simulated team of AI agents (Manager, Developer, QA) collaborate to achieve it. Approve their work to apply it directly to your project files.</p>
             </div>
-            
+
             {!isComplete ? (
-                 <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-4">
                     <textarea
                         className="w-full h-24 p-3 bg-gray-800 border border-gray-700 rounded-lg"
                         value={goal}
@@ -3075,7 +3294,7 @@ const AgentSimulationView = ({ project, onUpdateProject, onSwitchView, state, on
                     >
                         {isLoading ? 'Simulating...' : 'Start Simulation'} <LogoIcon className="w-5 h-5 button-logo-icon" />
                     </button>
-                 </div>
+                </div>
             ) : (
                 <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
                     <h3 className="text-lg font-bold">Simulation Complete</h3>
@@ -3086,7 +3305,7 @@ const AgentSimulationView = ({ project, onUpdateProject, onSwitchView, state, on
                             <ul className="text-sm list-disc list-inside text-gray-300">{createdFiles.map(f => <li key={f} className="truncate">{f}</li>)}</ul>
                         </div>
                         <div>
-                             <h4 className="font-semibold mb-2 text-yellow-400">Files to Modify ({modifiedFiles.length})</h4>
+                            <h4 className="font-semibold mb-2 text-yellow-400">Files to Modify ({modifiedFiles.length})</h4>
                             <ul className="text-sm list-disc list-inside text-gray-300">{modifiedFiles.map(f => <li key={f} className="truncate">{f}</li>)}</ul>
                         </div>
                     </div>
@@ -3095,12 +3314,12 @@ const AgentSimulationView = ({ project, onUpdateProject, onSwitchView, state, on
                             <LogoIcon className="w-5 h-5 button-logo-icon" /> Approve & Apply Changes
                         </button>
                         <button onClick={handleDiscard} className="flex-1 flex items-center justify-center gap-2 bg-gray-600 font-semibold p-2 rounded-lg hover:bg-gray-500">
-                           <LogoIcon className="w-5 h-5 button-logo-icon" /> Discard
+                            <LogoIcon className="w-5 h-5 button-logo-icon" /> Discard
                         </button>
                     </div>
                 </div>
             )}
-            
+
             <div className="bg-gray-800 rounded-lg p-4 border border-gray-700 overflow-y-auto flex-grow">
                 {isLoading && <div className="text-center p-8">Simulation in progress... This may take a moment.</div>}
                 {error && <p className="text-red-400">{error}</p>}
@@ -3122,7 +3341,7 @@ const AgentSimulationView = ({ project, onUpdateProject, onSwitchView, state, on
                         })}
                     </div>
                 )}
-                 {!isLoading && !error && simulationTurns.length === 0 && (
+                {!isLoading && !error && simulationTurns.length === 0 && (
                     <div className="text-center text-gray-500 p-8">
                         The simulation results will appear here.
                     </div>
