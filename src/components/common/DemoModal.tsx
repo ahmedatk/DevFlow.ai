@@ -5,9 +5,17 @@ import {
     ArchitectureIcon, ComplexityIcon, CommitIcon,
     MemoryIcon, HeatmapIcon, TeamDashboardIcon,
     RunReviewIcon, TestGeneratorIcon, CodeReviewIcon
-} from './icons';
+} from '../icons';
 
-const slides = [
+interface Slide {
+    id: string;
+    title: string;
+    subtitle: string;
+    icon: React.ReactElement;
+    color: string;
+}
+
+const slides: Slide[] = [
     {
         id: 'intro',
         title: 'Welcome to DevFlow.AI',
@@ -194,12 +202,12 @@ export const DemoModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
                                 key={idx}
                                 onClick={() => handleJumpTo(idx)}
                                 className={`w-full text-left px-4 py-3 rounded-lg text-sm font-medium transition-all flex items-center gap-3 ${currentSlide === idx
-                                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
-                                        : 'text-gray-400 hover:bg-gray-700/50 hover:text-white'
+                                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
+                                    : 'text-gray-400 hover:bg-gray-700/50 hover:text-white'
                                     }`}
                             >
                                 <span className="w-5 h-5 flex-shrink-0">
-                                    {React.cloneElement(s.icon as React.ReactElement, { className: 'w-full h-full' })}
+                                    {React.cloneElement(s.icon, { className: 'w-full h-full' } as any)}
                                 </span>
                                 <span className="truncate">{s.title}</span>
                             </button>

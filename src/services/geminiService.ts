@@ -424,3 +424,20 @@ export async function runAgentSimulation(goal: string, existingFiles: GeneratedC
         throw new Error("Failed to get a response from the AI model for the agent simulation. The model might have returned an invalid structure.");
     }
 }
+
+export async function generateCodeSnippet(description: string): Promise<string> {
+    const prompt = `
+        Generate a reusable code snippet for the following task:
+        "${description}"
+
+        Identify the most appropriate language.
+        Only output the raw code. Do not include any explanations or markdown formatting.
+    `;
+    try {
+        const response = await getAI().models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
+        return response.text;
+    } catch (error) {
+        console.error("Gemini API call failed for generateCodeSnippet:", error);
+        throw new Error("Failed to get a response from the AI model for code snippet generation.");
+    }
+}

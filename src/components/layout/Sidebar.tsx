@@ -1,13 +1,13 @@
 import React from 'react';
-import { 
+import {
     LogoIcon, DashboardIcon, TasksIcon, DocsIcon, ChatIcon, CodeReviewIcon, TestGeneratorIcon,
     ComplexityIcon, CommitIcon, HeatmapIcon, MemoryIcon, ScaffoldIcon, TeamDashboardIcon,
     RunReviewIcon, SimulationIcon, SnippetIcon, ProjectsIcon, ArchitectureIcon, UserIcon, LogoutIcon, EditorIcon, CloseIcon
-} from './icons';
+} from '../icons';
 
 export type View = 'decomposer' | 'reviewer' | 'tester' | 'tasks' | 'docs' | 'chat' |
-                   'complexity' | 'summarizer' | 'heatmap' | 'memory' | 'scaffolder' |
-                   'team_dashboard' | 'run_review' | 'simulation' | 'snippets' | 'architecture' | 'editor';
+    'complexity' | 'summarizer' | 'heatmap' | 'memory' | 'scaffolder' |
+    'team_dashboard' | 'run_review' | 'simulation' | 'snippets' | 'architecture' | 'editor';
 
 interface NavItemProps {
     icon: React.ReactNode;
@@ -22,8 +22,8 @@ const NavItem = ({ icon, label, isActive, onClick, disabled }: NavItemProps) => 
         onClick={onClick}
         disabled={disabled}
         className={`flex items-center w-full px-4 py-2.5 rounded-lg transition-colors duration-200 text-left ${isActive
-                ? 'bg-blue-600 text-white'
-                : 'text-gray-400 hover:bg-gray-700 hover:text-gray-200'
+            ? 'bg-blue-600 text-white'
+            : 'text-gray-400 hover:bg-gray-700 hover:text-gray-200'
             } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
     >
         {icon}
@@ -73,7 +73,7 @@ export const Sidebar = ({ activeView, setActiveView, onGoBack, userEmail, onLogo
                     </button>
                 )}
             </div>
-            
+
             <button
                 onClick={handleGoBack}
                 className="flex items-center w-full px-4 py-2.5 mb-4 rounded-lg transition-colors duration-200 text-left text-gray-400 hover:bg-gray-700 hover:text-gray-200 border border-gray-700"
@@ -81,18 +81,18 @@ export const Sidebar = ({ activeView, setActiveView, onGoBack, userEmail, onLogo
                 <ProjectsIcon />
                 <span className="ml-4 font-medium">All Projects</span>
             </button>
-            
+
             <nav className="flex-grow space-y-2 overflow-y-auto pr-1">
                 <p className="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Core</p>
                 <NavItem icon={<DashboardIcon />} label="Task Decomposer" isActive={activeView === 'decomposer'} onClick={() => handleSelectView('decomposer')} />
                 <NavItem icon={<TasksIcon />} label="Tasks" isActive={activeView === 'tasks'} onClick={() => handleSelectView('tasks')} />
                 <NavItem icon={<DocsIcon />} label="Documentation" isActive={activeView === 'docs'} onClick={() => handleSelectView('docs')} />
                 <NavItem icon={<ChatIcon />} label="Team Chat" isActive={activeView === 'chat'} onClick={() => handleSelectView('chat')} />
-                
+
                 <div className="pt-4 pb-2">
                     <hr className="border-t border-gray-700" />
                 </div>
-                
+
                 <p className="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Tools</p>
                 <NavItem icon={<EditorIcon />} label="Editor" isActive={activeView === 'editor'} onClick={() => handleSelectView('editor')} />
                 <NavItem icon={<CodeReviewIcon />} label="Code Review" isActive={activeView === 'reviewer'} onClick={() => handleSelectView('reviewer')} />
@@ -107,7 +107,7 @@ export const Sidebar = ({ activeView, setActiveView, onGoBack, userEmail, onLogo
                 <div className="pt-4 pb-2">
                     <hr className="border-t border-gray-700" />
                 </div>
-                
+
                 <p className="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Advanced</p>
                 <NavItem icon={<MemoryIcon />} label="Memory Agent" isActive={activeView === 'memory'} onClick={() => handleSelectView('memory')} />
 
@@ -117,13 +117,13 @@ export const Sidebar = ({ activeView, setActiveView, onGoBack, userEmail, onLogo
             </nav>
             <div className="mt-auto flex-shrink-0 pt-4 border-t border-gray-700 safe-area-bottom">
                 <div className="flex items-center gap-3 px-2 mb-2">
-                     <UserIcon className="w-8 h-8 text-gray-400 bg-gray-700 p-1.5 rounded-full" />
-                     <div className="flex-grow overflow-hidden">
+                    <UserIcon className="w-8 h-8 text-gray-400 bg-gray-700 p-1.5 rounded-full" />
+                    <div className="flex-grow overflow-hidden">
                         <p className="text-sm font-medium text-gray-200 truncate">{userEmail}</p>
-                     </div>
-                     <button onClick={onLogout} title="Logout" className="p-2 rounded-md hover:bg-gray-700">
+                    </div>
+                    <button onClick={onLogout} title="Logout" className="p-2 rounded-md hover:bg-gray-700">
                         <LogoutIcon className="w-5 h-5 text-gray-400" />
-                     </button>
+                    </button>
                 </div>
                 {/* Developed in India with bouncing love emoji */}
                 <div className="flex items-center justify-center gap-1.5 px-2 py-1 text-[10px] text-gray-500">

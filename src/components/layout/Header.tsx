@@ -1,5 +1,5 @@
 import React from 'react';
-import { MenuIcon, CloseIcon } from './icons';
+import { MenuIcon, CloseIcon } from '../icons';
 
 export const Header = ({ title, projectName, onToggleSidebar, isSidebarOpen }: { title: string, projectName: string, onToggleSidebar?: () => void, isSidebarOpen?: boolean }) => {
     const showToggle = Boolean(onToggleSidebar);

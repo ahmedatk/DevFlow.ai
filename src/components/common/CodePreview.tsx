@@ -1,7 +1,7 @@
 
 import React from 'react';
-import type { GeneratedFile } from '../types';
-import { CodeIcon } from './icons';
+import type { GeneratedFile } from '../../types';
+import { CodeIcon } from '../icons';
 
 interface CodePreviewProps {
     file: GeneratedFile | null;
@@ -18,7 +18,7 @@ export const CodePreview = ({ file, isLoading }: CodePreviewProps) => {
             setTimeout(() => setCopied(false), 2000);
         }
     };
-    
+
     if (isLoading) {
         return (
             <div className="bg-gray-800 rounded-lg p-4 h-full flex items-center justify-center border border-gray-700">

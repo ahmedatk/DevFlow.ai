@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { LogoIcon } from './icons';
+import { LogoIcon } from '../icons';
 
 interface FeatureModalProps {
     feature: {
